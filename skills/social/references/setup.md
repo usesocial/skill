@@ -142,7 +142,14 @@ export SOCIAL_WEB_URL=http://localhost:3000
 
 ## Error catalog
 
-Errors arrive on stderr with a non-zero exit. In `--json` mode they print as `{ "status": "error", "code": "...", "message": "..." }`. Surface messages verbatim — they are precise enough for the user to act on.
+Errors arrive on stderr with a non-zero exit. In `--json` mode they print as
+`{ "error": "...", "type": "..." }`, with `status`, `body`, `issues`, or
+`retryAfterSeconds` when available. Surface messages verbatim — they are precise enough
+for the user to act on.
+
+Exit codes are typed: `2` means fix command usage or local validation, `3` means not found,
+`4` means login/scope/auth, `5` means API or unexpected failure, and `7` means rate
+limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before retrying.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |

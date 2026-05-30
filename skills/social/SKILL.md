@@ -83,6 +83,17 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 - For user-facing summaries, build a short markdown table from `jq` output rather than dumping raw JSON.
 - Surface errors verbatim — codes like `scope_missing`, `endpoint_not_available_in_v1`, `rate_limited`, `platform_not_connected` are precise. Full error catalog in `references/setup.md`.
 
+Exit codes are stable:
+
+| Code | Meaning | What to do |
+| ---- | ------- | ---------- |
+| `0` | Success | Continue. |
+| `2` | Usage or validation error | Fix args, flags, IDs, JSON body, or local input. |
+| `3` | Not found | Check the ID or select a different resource. |
+| `4` | Auth or scope error | Run `social login`, or re-login with the needed scope. |
+| `5` | API or unexpected error | Retry later or surface the server error. |
+| `7` | Rate limited | Back off; JSON errors may include `retryAfterSeconds`. |
+
 ## Scopes and billing
 
 The bearer token carries one of `read` or `read,write`. Every read command works with `read`. Write endpoints (where enabled) need `read,write`; a mismatch surfaces as `scope_missing`. Fix:
