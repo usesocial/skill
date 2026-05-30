@@ -46,7 +46,7 @@ Env vars are optional — defaults point at the hosted API:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `SOCIAL_API_URL` | `https://api.socialcli.dev/v1` | API base URL |
-| `SOCIAL_WEB_URL` | `https://socialcli.dev` | Device-approval web URL |
+| `SOCIAL_API_URL` | `https://api.usesocial.dev/v1` | API base URL |
+| `SOCIAL_WEB_URL` | `https://usesocial.dev` | Device-approval web URL |
 
 For local development, point both at localhost. See `skills/social/references/setup.md` for the full setup, scope, and troubleshooting reference.

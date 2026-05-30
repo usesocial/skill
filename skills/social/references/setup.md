@@ -129,8 +129,8 @@ Defaults point at production; override only for local dev or staging:
 
 | Variable                         | Default                        | Purpose                                                                                           |
 | -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `SOCIAL_API_URL`                 | `https://api.socialcli.dev/v1` | Versioned API base. ORPC at `${SOCIAL_API_URL}/rpc`, proxy at `${SOCIAL_API_URL}/{linkedin,x}/*`. |
-| `SOCIAL_WEB_URL`                 | `https://socialcli.dev`        | Web app for device approval and OAuth landing.                                                    |
+| `SOCIAL_API_URL`                 | `https://api.usesocial.dev/v1` | Versioned API base. ORPC at `${SOCIAL_API_URL}/rpc`, proxy at `${SOCIAL_API_URL}/{linkedin,x}/*`. |
+| `SOCIAL_WEB_URL`                 | `https://usesocial.dev`        | Web app for device approval and OAuth landing.                                                    |
 | `WSL_DISTRO_NAME`, `WSL_INTEROP` | —                              | **Auto-detected.** Do not set.                                                                    |
 
 For local dev against the monorepo `just dev`:

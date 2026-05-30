@@ -6,7 +6,7 @@
     "name": "Cyrus Nouroozi",
     "email": "knouroozi@gmail.com"
   },
-  "homepage": "https://socialcli.dev",
+  "homepage": "https://usesocial.dev",
   "repository": "https://github.com/usesocial/skill",
   "keywords": ["social", "linkedin", "x", "twitter", "cli", "usesocial"],
   "skills": "./skills/"
