@@ -4,15 +4,58 @@ How to get `social` working from a fresh machine and how to recover from auth fa
 
 ## Install the CLI
 
-Prefer Bun, fall back to npm:
+Three supported routes — use whichever the user prefers; Homebrew is convenient on macOS/Linux, Bun/npm for Node-based setups:
 
 ```bash
-bun install -g @usesocial/cli@latest
+brew install social                  # Homebrew (formula/tap as published)
 # or
-npm install -g @usesocial/cli
+bun install -g @usesocial/cli@latest # Bun
+# or
+npm install -g @usesocial/cli        # npm
 ```
 
 The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+
+## Staying current
+
+Two moving parts can drift: the `social` binary and this skill. Keep both fresh, but never update silently — surface the notice and let the user decide.
+
+### The CLI
+
+`social` checks for a newer release at most once a day and prints a one-line notice to **stderr** when one exists:
+
+```
+update available: 0.4.1 → 0.5.0 — run `social upgrade`
+```
+
+The first-use probe in `SKILL.md` already runs the CLI every session and captures stderr (`2>&1`), so this notice rides along for free — no extra round-trip. When you see it, surface it once and offer to update.
+
+`social upgrade` is the canonical path. The CLI knows how it was installed (Homebrew, Bun, or npm) and dispatches the right command itself — you do **not** need to detect the package manager:
+
+```bash
+social upgrade            # detect install method, update in place
+social upgrade --check    # report installed vs latest; exit non-zero if stale; change nothing
+```
+
+If `social upgrade` is unavailable (older build prints "unknown command"), fall back to the install command for the manager actually in use — ask the user how they installed it rather than guessing:
+
+| Installed via | Update command                      |
+| ------------- | ----------------------------------- |
+| Homebrew      | `brew upgrade social`               |
+| Bun           | `bun add -g @usesocial/cli@latest`  |
+| npm           | `npm install -g @usesocial/cli@latest` |
+
+Do **not** infer the manager by resolving `which social` symlinks — it is brittle across Homebrew prefixes, `~/.bun/bin`, and npm prefixes. Updating the CLI mid-session is safe: each call is a fresh process, so the new binary takes effect on the next command.
+
+### The skill
+
+If the skill was installed with `npx skills`, update it with:
+
+```bash
+npx skills update social
+```
+
+If it was installed by the CLI (`social login --skill-target …`), `social upgrade` refreshes it in place. Either way, updating the skill markdown does **not** change the current session — the old text is already loaded in context; the refresh takes effect the next time the skill loads.
 
 Verify:
 

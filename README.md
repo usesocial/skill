@@ -32,10 +32,13 @@ The repo also carries Claude and Codex plugin manifests for agents that can cons
 The skill expects the `social` binary on `PATH`. If it is missing, the skill will install it and walk the user through `social login` (device flow, requires browser approval).
 
 ```sh
-bun install -g @usesocial/cli@latest    # preferred
-npm install -g @usesocial/cli           # fallback
-social login                          # device-authorization sign-in
+brew install social                      # Homebrew (formula/tap as published)
+bun install -g @usesocial/cli@latest     # or Bun
+npm install -g @usesocial/cli            # or npm
+social login                             # device-authorization sign-in
 ```
+
+Keep both the CLI and the skill current with `social upgrade` and `npx skills update social`. See `skills/social/references/setup.md` → "Staying current".
 
 ## Configuration
 

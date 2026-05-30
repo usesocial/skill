@@ -37,6 +37,7 @@ Interpret the output:
 - **`command not found: social`** → install: `bun install -g @usesocial/cli@latest` (fall back to `npm install -g @usesocial/cli`). Re-probe.
 - **`unauthenticated`, `401`, `Not signed in`** → run `social login`. Interactive device flow that opens `${SOCIAL_WEB_URL}/device`; it cannot complete headlessly. Surface the verification URL/code and wait for the user to approve. `--no-open` prints the URL inline.
 - **`platform_not_connected`** → run `social linkedin connect` or `social x connect` (`--no-open` to print the URL). The user approves the handshake in their browser.
+- **An `update available …` notice on stderr** (the CLI self-checks at most once a day) → mention it once and offer to run `social upgrade`; update only with consent, never silently. See `references/setup.md` → "Staying current".
 
 Do **not** background `social login` or `social <platform> connect` — both wait on a foreground poll loop.
 
