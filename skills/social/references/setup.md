@@ -7,7 +7,7 @@ How to get `social` working from a fresh machine and how to recover from auth fa
 Three supported routes — use whichever the user prefers; Homebrew is convenient on macOS/Linux, Bun/npm for Node-based setups:
 
 ```bash
-brew install social                  # Homebrew (formula/tap as published)
+brew install usesocial/tap/cli       # Homebrew
 # or
 bun install -g @usesocial/cli@latest # Bun
 # or
@@ -41,7 +41,7 @@ If `social upgrade` is unavailable (older build prints "unknown command"), fall 
 
 | Installed via | Update command                      |
 | ------------- | ----------------------------------- |
-| Homebrew      | `brew upgrade social`               |
+| Homebrew      | `brew upgrade usesocial/tap/cli`    |
 | Bun           | `bun add -g @usesocial/cli@latest`  |
 | npm           | `npm install -g @usesocial/cli@latest` |
 
@@ -55,7 +55,7 @@ If the skill was installed with `npx skills`, update it with:
 npx skills update social
 ```
 
-If it was installed by the CLI (`social login --skill-target …`), `social upgrade` refreshes it in place. Either way, updating the skill markdown does **not** change the current session — the old text is already loaded in context; the refresh takes effect the next time the skill loads.
+Updating the skill markdown does **not** change the current session — the old text is already loaded in context; the refresh takes effect the next time the skill loads.
 
 Verify:
 
@@ -75,7 +75,6 @@ Flags:
 | `--email <addr>`                      | Skip the email prompt.                                                                                                      |
 | `--scope read` \| `read,write`        | Pick capability bundle. `read` is safer; `read,write` allows write endpoints. Default `read`.                               |
 | `--accept-pricing`                    | Pre-accept the seat checkout if needed.                                                                                     |
-| `--skill-target none\|manual\|<path>` | Where to install the agent skill. `social login` installs `usesocial/skill` by default; from inside this plugin use `none`. |
 | `--no-open`                           | Print the URL instead of opening a browser (use under WSL/SSH/inside-agent).                                                |
 | `--non-interactive`                   | Disable prompts; emit `{ status: "needs_input", missing: [...] }` JSON if anything is missing.                              |
 | `--json` / `--pretty`                 | Machine output. Pair with `--non-interactive` for scripted flows.                                                           |
