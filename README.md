@@ -1,6 +1,6 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X on the user's behalf — search people and posts, fetch profiles, read timelines, list bookmarks, drill into comments/reactions, look up companies, audit billing — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X on the user's behalf — search people and posts, fetch profiles, read timelines, list bookmarks, triage inbox/DMs, drill into comments/reactions, look up companies, audit billing — and how to handle setup, scopes, and output formats.
 
 ## What ships
 
