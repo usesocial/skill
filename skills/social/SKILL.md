@@ -56,8 +56,8 @@ Shared across both platforms:
 
 |               | LinkedIn (`social linkedin …`)                      | X (`social x …`)                                                                  |
 | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Page size     | `--limit` (1–100; 1–1000 for `users connections`)   | `--max-results` (1–100; 5–100 for `users tweets`; 10–100 for `search recent`)     |
-| Pagination    | `--cursor` ← `.cursor`                              | `--pagination-token` (or `--next-token` for `search recent`) ← `.meta.next_token` |
+| Page size     | `--limit` (1–100; 1–1000 for `users connections`)   | `--limit` (1–100; 5–100 for `users tweets`; 10–100 for `search recent`)           |
+| Pagination    | `--cursor` ← `.cursor`                              | `--cursor` ← `.meta.next_token`                                                   |
 | List shape    | `{ items: [...], cursor? }`                         | X v2 envelope: `{ data, includes, meta }`                                         |
 | Positional ID | identifier passed inline; CLI resolves URLs/handles | most list commands need **your numeric X user ID** as a positional                |
 
@@ -103,7 +103,7 @@ social logout
 social login --scope read,write
 ```
 
-Every proxy call is metered. Prefer one `--limit 100` / `--max-results 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage --summary` (optionally `--platform linkedin|x`).
+Every proxy call is metered. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage --summary` (optionally `--platform linkedin|x`).
 
 ## Safety rules
 
