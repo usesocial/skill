@@ -1,7 +1,7 @@
 {
   "name": "social",
   "version": "0.1.0",
-  "description": "Explore followers and connections, manage DMs and inboxes, draft replies, and keep LinkedIn and X work moving from inside Codex.",
+  "description": "Interact with your social networks — LinkedIn and X — from inside Codex: search people and posts, read profiles, timelines, comments, reactions, companies, jobs, and bookmarks, manage connected accounts, and post where enabled. Runs on the social CLI.",
   "author": {
     "name": "Cyrus Nouroozi",
     "email": "knouroozi@gmail.com"
@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "Social",
     "shortDescription": "Manage LinkedIn and X from Codex.",
-    "longDescription": "Social helps Codex explore your followers and connections, manage DMs and inboxes, draft replies, review accounts, and keep LinkedIn and X work organized through the social CLI.",
+    "longDescription": "Social lets Codex interact with your LinkedIn and X accounts through the social CLI — search people and posts, read profiles, timelines, comments, reactions, companies, jobs, and bookmarks, manage connected accounts, and post where enabled. One login, one bill; the agent runs the calls, you stay the decision-maker.",
     "developerName": "Cyrus Nouroozi",
     "category": "Productivity",
     "capabilities": [],

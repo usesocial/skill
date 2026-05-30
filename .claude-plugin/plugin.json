@@ -1,7 +1,7 @@
 {
   "name": "social",
   "version": "0.1.0",
-  "description": "Explore followers and connections, manage DMs and inboxes, draft replies, and keep LinkedIn and X work moving from inside Claude Code.",
+  "description": "Interact with your social networks — LinkedIn and X — from inside Claude Code: search people and posts, read profiles, timelines, comments, reactions, companies, jobs, and bookmarks, manage connected accounts, and post where enabled. Runs on the social CLI.",
   "author": {
     "name": "Cyrus Nouroozi",
     "email": "knouroozi@gmail.com"

@@ -1,20 +1,15 @@
-# Social agent skills
+# Social agent skill
 
-Agent skills for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. They teach supported agents when and how to call `social` to read and write LinkedIn and X on the user's behalf — search people, fetch posts, list bookmarks, read timelines, inspect billing — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X on the user's behalf — search people and posts, fetch profiles, read timelines, list bookmarks, drill into comments/reactions, look up companies, audit billing — and how to handle setup, scopes, and output formats.
 
 ## What ships
 
-Two platform-scoped skills, each with its own progressive-disclosure references. Each auto-triggers on natural intent for its platform and is also invokable as a slash command.
+One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my X bookmarks") and is also invokable as `/social`.
 
-- **`skills/linkedin/SKILL.md`** → `/social:linkedin` — search people/posts, fetch profiles, drill into post comments/reactions, look up companies/employees/jobs, manage LinkedIn account lifecycle, audit usage.
-- **`skills/x/SKILL.md`** → `/social:x` — search recent tweets, fetch tweets by ID, list a user's tweets, read the home timeline, manage bookmarks, manage X account lifecycle, audit usage.
-
-Each skill carries the same shape of references, loaded only when needed:
-
-- `references/setup.md` — install, `social login`, scope/billing, env vars, troubleshooting.
-- `references/commands.md` — full platform command catalog with arguments and output shapes.
-- `references/output.md` — `--json` / `--pretty`, `jq` recipes, error catalog.
-- `references/examples.md` — end-to-end platform-specific recipes.
+- **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, billing, safety, and how to pick a platform reference.
+- **`skills/social/references/setup.md`** — install, `social login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
+- **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
+- **`skills/social/references/x.md`** — full X command catalog, field/expansion presets, output shapes, `jq` recipes, and end-to-end playbooks.
 
 ## Install
 
@@ -51,4 +46,4 @@ Env vars are optional — defaults point at the hosted API:
 | `SOCIAL_API_URL` | `https://api.socialcli.dev/v1` | API base URL |
 | `SOCIAL_WEB_URL` | `https://socialcli.dev` | Device-approval web URL |
 
-For local development against `just dev`, point both at localhost — see `apps/cli/README.md`.
+For local development, point both at localhost. See `skills/social/references/setup.md` for the full setup, scope, and troubleshooting reference.
