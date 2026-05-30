@@ -1,0 +1,13 @@
+{
+  "name": "social",
+  "version": "0.1.0",
+  "description": "Explore followers and connections, manage DMs and inboxes, draft replies, and keep LinkedIn and X work moving from inside Claude Code.",
+  "author": {
+    "name": "Cyrus Nouroozi",
+    "email": "knouroozi@gmail.com"
+  },
+  "homepage": "https://socialcli.dev",
+  "repository": "https://github.com/usesocial/skill",
+  "keywords": ["social", "linkedin", "x", "twitter", "cli", "usesocial"],
+  "skills": "./skills/"
+}
