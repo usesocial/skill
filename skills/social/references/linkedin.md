@@ -206,14 +206,11 @@ The safety cap (`PAGE -gt 2`) prevents an unintended 10,000-employee scrape — 
 ### 4. Connect a new account end-to-end
 
 ```bash
-# 1. Make sure the user has a seat.
-social usage --summary --json | jq '.seats // empty'
-
-# 2. Connect.
+# 1. Connect. The CLI prepares another seat if billing needs one.
 social linkedin connect --no-open
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
-# 3. Confirm.
+# 2. Confirm.
 social linkedin list
 social linkedin users me --pretty
 ```

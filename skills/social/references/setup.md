@@ -163,7 +163,8 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit (X, Unipile, or LinkedIn).  | Back off per the retry hint. X quotas are tight on free tiers.           |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
-| `no_available_seat`                                  | Org has no remaining billing seat at `connect`.   | User adds a seat in the dashboard or releases one with `disconnect`.     |
+| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social <platform> connect`.  |
+| `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
 | `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within 5 minutes. | Re-run `social <platform> connect`.                                      |
 | `x_account_required`                                 | `disconnect` with multiple X accounts and no arg. | Add the handle/id.                                                       |
 

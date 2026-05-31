@@ -281,14 +281,11 @@ Only works for conversations in the last 7 days (X recent-search limit).
 ### 5. Connect a new account end-to-end
 
 ```bash
-# 1. Make sure the user has a seat.
-social usage --summary --json | jq '.seats // empty'
-
-# 2. Connect.
+# 1. Connect. The CLI prepares another seat if billing needs one.
 social x connect --no-open
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
-# 3. Confirm.
+# 2. Confirm.
 social x list
 social x users me --pretty
 ```
