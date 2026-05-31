@@ -32,7 +32,7 @@ The repo also carries Claude and Codex plugin manifests for agents that can cons
 The skill expects the `social` binary on `PATH`. If it is missing, the skill will install it and walk the user through `social login` (device flow, requires browser approval).
 
 ```sh
-brew install usesocial/tap/cli           # Homebrew
+brew tap usesocial/tap/cli           # Homebrew
 bun install -g @usesocial/cli            # or Bun
 npm install -g @usesocial/cli            # or npm
 social login                             # device-authorization sign-in

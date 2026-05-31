@@ -7,7 +7,7 @@ How to get `social` working from a fresh machine and how to recover from auth fa
 Three supported routes — use whichever the user prefers; Homebrew is convenient on macOS/Linux, Bun/npm for Node-based setups:
 
 ```bash
-brew install usesocial/tap/cli       # Homebrew
+brew tap usesocial/tap/cli       # Homebrew
 # or
 bun install -g @usesocial/cli        # Bun
 # or
