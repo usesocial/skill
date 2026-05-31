@@ -1,12 +1,12 @@
 ---
 name: social
-description: Use when the user wants to interact with their social networks — LinkedIn or X (Twitter). Covers searching people and posts, reading profiles, timelines, comments, reactions, companies, jobs, bookmarks, LinkedIn inboxes, and X DMs, managing connected accounts, and (where enabled) posting or messaging on their behalf. Triggers include "search LinkedIn", "find <name> on LinkedIn", "look up this tweet", "my X bookmarks", "show my home timeline", "check my inbox", "read my DMs", "from:<handle>", and explicit `/social`. Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs directly.
+description: Use when the user wants agent-run distribution across LinkedIn or X (Twitter): outreach, posting, audience insights, inbox/DM triage, account research, comments/reactions, companies, jobs, bookmarks, connected-account management, and billing audits. Triggers include "search LinkedIn", "find <name> on LinkedIn", "look up this tweet", "my X bookmarks", "show my home timeline", "check my inbox", "read my DMs", "from:<handle>", and explicit `/social`. Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs directly.
 argument-hint: [task — e.g. "search LinkedIn for AI founders", "list my X bookmarks", "read my DMs"]
 ---
 
 # social
 
-Operate the user's LinkedIn and X accounts through the `social` CLI. The agent runs the calls; the user stays the decision-maker. Treat `social` as the **only** correct way to reach LinkedIn or X data here — never call their HTTP APIs directly.
+Run distribution across the user's LinkedIn and X accounts through the `social` CLI. The agent runs the calls; the user stays the decision-maker. Treat `social` as the **only** correct way to reach LinkedIn or X data here — never call their HTTP APIs directly.
 
 `social` wraps two platform subtrees plus shared global commands:
 
@@ -34,10 +34,9 @@ social x users me --json 2>&1 | head -c 400            # for X work
 Interpret the output:
 
 - **Exit 0 with a JSON profile** → installed, signed in, connected. Proceed. (For X, capture `.data.id` — most X list commands need it as a positional.)
-- **`command not found: social`** → install: `bun install -g @usesocial/cli@latest` (fall back to `npm install -g @usesocial/cli`). Re-probe.
+- **`command not found: social`** → install: `bun install -g @usesocial/cli` (fall back to `npm install -g @usesocial/cli`). Re-probe.
 - **`unauthenticated`, `401`, `Not signed in`** → run `social login`. Interactive device flow that opens `${SOCIAL_WEB_URL}/device`; it cannot complete headlessly. Surface the verification URL/code and wait for the user to approve. `--no-open` prints the URL inline.
 - **`platform_not_connected`** → run `social linkedin connect` or `social x connect` (`--no-open` to print the URL). The user approves the handshake in their browser.
-- **An `update available …` notice on stderr** (the CLI self-checks at most once a day) → mention it once and offer to run `social upgrade`; update only with consent, never silently. See `references/setup.md` → "Staying current".
 
 Do **not** background `social login` or `social <platform> connect` — both wait on a foreground poll loop.
 

@@ -1,6 +1,6 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X on the user's behalf — search people and posts, fetch profiles, read timelines, list bookmarks, triage inbox/DMs, drill into comments/reactions, look up companies, audit billing — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` for agent-run distribution across LinkedIn and X — outreach, posting, audience insights, inbox/DM triage, account research, billing audits — and how to handle setup, scopes, and output formats.
 
 ## What ships
 
@@ -33,12 +33,12 @@ The skill expects the `social` binary on `PATH`. If it is missing, the skill wil
 
 ```sh
 brew install usesocial/tap/cli           # Homebrew
-bun install -g @usesocial/cli@latest     # or Bun
+bun install -g @usesocial/cli            # or Bun
 npm install -g @usesocial/cli            # or npm
 social login                             # device-authorization sign-in
 ```
 
-Keep both the CLI and the skill current with `social upgrade` and `npx skills update social`. See `skills/social/references/setup.md` → "Staying current".
+Keep the skill current with `npx skills update social`. Re-run the relevant install command when you need to update the CLI.
 
 ## Configuration
 

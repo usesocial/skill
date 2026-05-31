@@ -9,7 +9,7 @@ Three supported routes — use whichever the user prefers; Homebrew is convenien
 ```bash
 brew install usesocial/tap/cli       # Homebrew
 # or
-bun install -g @usesocial/cli@latest # Bun
+bun install -g @usesocial/cli        # Bun
 # or
 npm install -g @usesocial/cli        # npm
 ```
@@ -18,26 +18,9 @@ The package publishes the `social` binary (ESM, Node 24). If the binary is missi
 
 ## Staying current
 
-Two moving parts can drift: the `social` binary and this skill. Keep both fresh, but never update silently — surface the notice and let the user decide.
+Two moving parts can drift: the `social` binary and this skill. Keep both fresh, but never update silently — let the user decide before changing installed tools.
 
-### The CLI
-
-`social` checks for a newer release at most once a day and prints a one-line notice to **stderr** when one exists:
-
-```
-update available: 0.4.1 → 0.5.0 — run `social upgrade`
-```
-
-The first-use probe in `SKILL.md` already runs the CLI every session and captures stderr (`2>&1`), so this notice rides along for free — no extra round-trip. When you see it, surface it once and offer to update.
-
-`social upgrade` is the canonical path. The CLI knows how it was installed (Homebrew, Bun, or npm) and dispatches the right command itself — you do **not** need to detect the package manager:
-
-```bash
-social upgrade            # detect install method, update in place
-social upgrade --check    # report installed vs latest; exit non-zero if stale; change nothing
-```
-
-If `social upgrade` is unavailable (older build prints "unknown command"), fall back to the install command for the manager actually in use — ask the user how they installed it rather than guessing:
+Update the CLI with the package manager the user actually used:
 
 | Installed via | Update command                      |
 | ------------- | ----------------------------------- |
@@ -46,8 +29,6 @@ If `social upgrade` is unavailable (older build prints "unknown command"), fall 
 | npm           | `npm install -g @usesocial/cli@latest` |
 
 Do **not** infer the manager by resolving `which social` symlinks — it is brittle across Homebrew prefixes, `~/.bun/bin`, and npm prefixes. Updating the CLI mid-session is safe: each call is a fresh process, so the new binary takes effect on the next command.
-
-### The skill
 
 If the skill was installed with `npx skills`, update it with:
 
