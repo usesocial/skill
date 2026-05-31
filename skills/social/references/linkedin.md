@@ -8,10 +8,10 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 | Command                                                  | Purpose                                                     |
 | -------------------------------------------------------- | ----------------------------------------------------------- |
-| `social linkedin connect [--no-open]`                    | Hosted-auth handshake (Unipile). Opens the web app.         |
-| `social linkedin reconnect <username-or-id> [--no-open]` | Re-auth an existing account.                                |
-| `social linkedin disconnect [username-or-id]`            | Disconnect. Omit the id when only one account is connected. |
-| `social linkedin list [--include-disconnected]`          | List connected accounts.                                    |
+| `social accounts connect linkedin [--no-open]`           | Hosted-auth handshake (Unipile). Opens the web app.         |
+| `social accounts reconnect linkedin <account> [--no-open]` | Re-auth an existing account.                              |
+| `social accounts disconnect linkedin <account>`          | Disconnect an account.                                      |
+| `social accounts list linkedin [--include-disconnected]` | List connected LinkedIn accounts.                           |
 
 ## `users`
 
@@ -201,11 +201,11 @@ The safety cap (`PAGE -gt 2`) prevents an unintended 10,000-employee scrape — 
 
 ```bash
 # 1. Connect. The CLI prepares another seat if billing needs one.
-social linkedin connect --no-open
+social accounts connect linkedin --no-open
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
 # 2. Confirm.
-social linkedin list
+social accounts list linkedin
 social linkedin whoami --pretty
 ```
 

@@ -11,11 +11,12 @@ Run distribution across the user's LinkedIn and X accounts through the `social` 
 `social` wraps two platform subtrees plus shared global commands:
 
 ```
-social schema | usage | linkedin | x | login | logout
+social schema | usage | accounts | linkedin | x | login | logout
 ```
 
-- **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post search, inbox messages, account lifecycle. Load `references/linkedin.md` for the full catalog and recipes.
-- **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts, account lifecycle. Load `references/x.md` for the full catalog and recipes.
+- **`social accounts …`** — connect, reconnect, disconnect, and list LinkedIn/X accounts.
+- **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post search, inbox messages. Load `references/linkedin.md` for the full catalog and recipes.
+- **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts. Load `references/x.md` for the full catalog and recipes.
 - **`social usage`** — recent proxy calls or a billing summary (`--summary`), optionally `--platform linkedin|x`.
 - **`social schema [path] --json`** — authoritative machine-readable command tree. Cheaper than guessing.
 - **`social login` / `social logout`** — session and scope. See `references/setup.md`.
@@ -36,9 +37,9 @@ Interpret the output:
 - **Exit 0 with a JSON profile** → installed, signed in, connected. Proceed. (For X, capture `.data.id` — most X list commands need it as a positional.)
 - **`command not found: social`** → install: `bun install -g @usesocial/cli` (fall back to `npm install -g @usesocial/cli`). Re-probe.
 - **`unauthenticated`, `401`, `Not signed in`** → run `social login`. Interactive device flow that opens `${SOCIAL_WEB_URL}/device`; it cannot complete headlessly. Surface the verification URL/code and wait for the user to approve. `--no-open` prints the URL inline.
-- **`platform_not_connected`** → run `social linkedin connect` or `social x connect` (`--no-open` to print the URL). The user approves the handshake in their browser.
+- **`platform_not_connected`** → run `social accounts connect linkedin` or `social accounts connect x` (`--no-open` to print the URL). The user approves the handshake in their browser.
 
-Do **not** background `social login` or `social <platform> connect` — both wait on a foreground poll loop.
+Do **not** background `social login` or `social accounts connect <platform>` — both wait on a foreground poll loop.
 
 Full install, scope, billing, and troubleshooting detail lives in `references/setup.md`.
 
@@ -47,7 +48,7 @@ Full install, scope, billing, and troubleshooting detail lives in `references/se
 Shared across both platforms:
 
 - `--json` / `--pretty` — pick `--json` whenever output feeds analysis (parsing, filtering, summarising, saving); pipe through `jq`. Use `--pretty` only for small payloads the user reads inline. No flag prints a human-formatted view — don't parse it.
-- `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against `social <platform> list`.
+- `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against `social accounts list <platform>`.
 - `--no-cache` — bypass cached reads and refresh the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 

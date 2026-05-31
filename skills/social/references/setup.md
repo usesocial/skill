@@ -67,22 +67,22 @@ After success, credentials live in the OS keyring (service `social-cli`) with a 
 `login` only authenticates the user against the social API. Each platform needs its own connection handshake:
 
 ```bash
-social linkedin connect --no-open    # Unipile hosted auth — prints the URL to share
-social x connect --no-open           # X OAuth handshake — prints the URL to share
+social accounts connect linkedin --no-open    # Unipile hosted auth — prints the URL to share
+social accounts connect x --no-open           # X OAuth handshake — prints the URL to share
 ```
 
-The CLI polls for up to 5 minutes until the connection appears in `social <platform> list`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+The CLI polls for up to 5 minutes until the connection appears in `social accounts list <platform>`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
 
 To swap accounts:
 
 ```bash
-social linkedin list
-social linkedin disconnect <username-or-public-id>
-social linkedin reconnect <username-or-public-id>
+social accounts list linkedin
+social accounts disconnect linkedin <username-or-public-id>
+social accounts reconnect linkedin <username-or-public-id>
 
-social x list
-social x disconnect <handle-or-id>
-social x reconnect <handle-or-id>
+social accounts list x
+social accounts disconnect x <handle-or-id>
+social accounts reconnect x <handle-or-id>
 ```
 
 ## Scopes
@@ -101,7 +101,7 @@ social login --scope read,write
 
 ## Per-call account selection
 
-Every command accepts `--account <handle-or-id>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against `social <platform> list`.
+Every command accepts `--account <handle-or-id>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against `social accounts list <platform>`.
 
 ## Caching
 
@@ -158,15 +158,15 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social login`.                                                          |
 | `scope_missing`                                      | Token has `read`, command needs `write`.          | `social logout && social login --scope read,write`.                      |
-| `platform_not_connected`                             | No connected account for that platform.           | `social linkedin connect` or `social x connect`.                         |
-| `account_not_found`                                  | `--account` value did not match.                  | `social <platform> list`, reuse the printed handle/id.                   |
+| `platform_not_connected`                             | No connected account for that platform.           | `social accounts connect linkedin` or `social accounts connect x`.       |
+| `account_not_found`                                  | `--account` value did not match.                  | `social accounts list <platform>`, reuse the printed handle/id.          |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit (X, Unipile, or LinkedIn).  | Back off per the retry hint. X quotas are tight on free tiers.           |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
-| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social <platform> connect`.  |
+| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social accounts connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
-| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within 5 minutes. | Re-run `social <platform> connect`.                                      |
-| `x_account_required`                                 | `disconnect` with multiple X accounts and no arg. | Add the handle/id.                                                       |
+| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within 5 minutes. | Re-run `social accounts connect <platform>`.                             |
+| `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the handle/id.                                                       |
 
 ## Troubleshooting
 
@@ -175,7 +175,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
 | `Not signed in` / `unauthenticated` | No token or expired.                             | `social login`.                                                              |
 | `scope_missing`                     | Token has `read`, command needs `write`.         | `social logout && social login --scope read,write`.                          |
-| `platform_not_connected`            | Account for that platform not connected.         | `social linkedin connect` / `social x connect`.                              |
+| `platform_not_connected`            | Account for that platform not connected.         | `social accounts connect linkedin` / `social accounts connect x`.            |
 | Browser fails to open               | WSL or headless.                                 | Re-run with `--no-open`, surface the URL to the user.                        |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
 

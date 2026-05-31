@@ -14,10 +14,10 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 
 | Command                                         | Purpose                                         |
 | ----------------------------------------------- | ----------------------------------------------- |
-| `social x connect [--no-open]`                  | OAuth handshake. Opens the web app.             |
-| `social x reconnect <handle-or-id> [--no-open]` | Re-auth after token revoke.                     |
-| `social x disconnect [handle-or-id]`            | Disconnect. Omit id when only one is connected. |
-| `social x list [--include-disconnected]`        | List connected accounts.                        |
+| `social accounts connect x [--no-open]`         | OAuth handshake. Opens the web app.             |
+| `social accounts reconnect x <account> [--no-open]` | Re-auth after token revoke.                 |
+| `social accounts disconnect x <account>`        | Disconnect an account.                          |
+| `social accounts list x [--include-disconnected]` | List connected X accounts.                    |
 
 ## `users`
 
@@ -283,11 +283,11 @@ Only works for conversations in the last 7 days (X recent-search limit).
 
 ```bash
 # 1. Connect. The CLI prepares another seat if billing needs one.
-social x connect --no-open
+social accounts connect x --no-open
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
 # 2. Confirm.
-social x list
+social accounts list x
 social x whoami --pretty
 ```
 
