@@ -27,8 +27,8 @@ If the user says "Twitter", route to X. If they ask for something a platform exp
 Before the first call to a platform in a session, confirm the CLI is installed, the user is signed in, and that platform is connected. Run the probe for the platform you need — one call doubles as the connectivity check, so an authenticated user pays no extra round-trip:
 
 ```bash
-social linkedin users me --json 2>&1 | head -c 400    # for LinkedIn work
-social x users me --json 2>&1 | head -c 400            # for X work
+social linkedin whoami --json 2>&1 | head -c 400    # for LinkedIn work
+social x whoami --json 2>&1 | head -c 400            # for X work
 ```
 
 Interpret the output:
@@ -65,7 +65,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 For X, resolve your ID once and reuse it for the session:
 
 ```bash
-MY_X_ID=$(social x users me --json | jq -r '.data.id')
+MY_X_ID=$(social x whoami --json | jq -r '.data.id')
 ```
 
 ## Choosing a command

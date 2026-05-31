@@ -5,10 +5,10 @@ Full command catalog, field/expansion presets, parsing patterns, and end-to-end 
 `social x <subtree> <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and many list commands need **your own numeric X user ID** as a positional. Resolve once and reuse:
 
 ```bash
-MY_X_ID=$(social x users me --json | jq -r '.data.id')
+MY_X_ID=$(social x whoami --json | jq -r '.data.id')
 ```
 
-X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users": [...], "media": [...], "tweets": [...] }, "meta": { "next_token": "...", "result_count": 25 } }`. `tweets get` and `users me` return the single object at `.data`. Joins (author, media) live in `.includes` — populate them with `--expansions` and the matching `--*-fields`. The pagination token comes back as `.meta.next_token`.
+X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users": [...], "media": [...], "tweets": [...] }, "meta": { "next_token": "...", "result_count": 25 } }`. `tweets get` and `whoami` return the single object at `.data`. Joins (author, media) live in `.includes` — populate them with `--expansions` and the matching `--*-fields`. The pagination token comes back as `.meta.next_token`.
 
 ## Account lifecycle
 
@@ -23,8 +23,9 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 
 | Command             | Args                                                                                                                                                                                                                                         | Notes                                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `users me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` — capture and reuse.                                                 |
-| `users tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `users me` or a search hit. |
+| `whoami`            | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` — capture and reuse.                                                 |
+| `users me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Same profile read as `whoami`.                                                                                 |
+| `users tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `whoami` or a search hit.   |
 | `users followers <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. `<id>` is the numeric X user ID. |
 | `users following <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. `<id>` is the numeric X user ID. |
 
@@ -90,10 +91,10 @@ The default response is sparse. Combine flags to enrich:
 
 ```bash
 # Smoke test.
-social x users me --pretty
+social x whoami --pretty
 
 # My ID — capture once.
-ID=$(social x users me --json | jq -r '.data.id')
+ID=$(social x whoami --json | jq -r '.data.id')
 
 # Last 50 bookmarks.
 social x bookmarks list "$ID" --limit 50 --json | jq '.data[].text'
@@ -161,7 +162,7 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 **Goal:** "Pull my last 30 days of tweets, rank by engagement."
 
 ```bash
-MY_ID=$(social x users me --json | jq -r '.data.id')
+MY_ID=$(social x whoami --json | jq -r '.data.id')
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -188,7 +189,7 @@ jq '
 **Goal:** "Export my X bookmarks as a markdown reading list."
 
 ```bash
-MY_ID=$(social x users me --json | jq -r '.data.id')
+MY_ID=$(social x whoami --json | jq -r '.data.id')
 
 PAGE_TOKEN=""
 PAGE=1
@@ -287,7 +288,7 @@ social x connect --no-open
 
 # 2. Confirm.
 social x list
-social x users me --pretty
+social x whoami --pretty
 ```
 
 Use `--no-open` from inside an agent session so the URL lands in the chat — the user opens it themselves.
