@@ -49,8 +49,10 @@ Shared across both platforms:
 
 - `--json` / `--pretty` — pick `--json` whenever output feeds analysis (parsing, filtering, summarising, saving); pipe through `jq`. Use `--pretty` only for small payloads the user reads inline. No flag prints a human-formatted view — don't parse it.
 - `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against `social <platform> list`.
-- `--no-cache` — bypass the cache. Avoid unless verifying freshly-published content; it costs more.
+- `--no-cache` — bypass cached reads and refresh the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
+
+Default caching: allowlisted GET reads use a 15 minute TTL. Change the local default with `social config cache ttl {total_in_seconds}`; `social config cache mode live|analytical|historical` provides presets. Details live in `references/setup.md`.
 
 **The two platforms diverge — don't mix their flags:**
 
@@ -103,7 +105,7 @@ social logout
 social login --scope read,write
 ```
 
-Every proxy call is metered. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage --summary` (optionally `--platform linkedin|x`).
+Fresh upstream proxy calls are metered; cache hits are free. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage --summary` (optionally `--platform linkedin|x`).
 
 ## Safety rules
 

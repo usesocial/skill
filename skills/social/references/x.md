@@ -25,6 +25,8 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `users me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` — capture and reuse.                                                 |
 | `users tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `users me` or a search hit. |
+| `users followers <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. `<id>` is the numeric X user ID. |
+| `users following <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. `<id>` is the numeric X user ID. |
 
 ## `tweets`
 
@@ -105,6 +107,10 @@ social x timelines home "$ID" --limit 25 --exclude replies --json
 
 # A specific user's recent tweets (resolve their ID via search or a known list).
 social x users tweets 44196397 --limit 30 --exclude retweets --pretty
+
+# Follower graph reads.
+social x users followers "$ID" --limit 100 --json
+social x users following 44196397 --limit 100 --json
 
 # Recent search.
 social x search recent "from:elonmusk" --limit 100 --sort-order recency --json

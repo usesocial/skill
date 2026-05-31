@@ -122,6 +122,29 @@ social login --scope read,write
 
 Every command accepts `--account <handle-or-id>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against `social <platform> list`.
 
+## Caching
+
+Allowlisted GET reads use the proxy cache by default. Cache hits are free because
+they skip the upstream provider call. Fresh upstream reads and writes are still
+metered.
+
+The default cache TTL is 15 minutes. Configure the local default in seconds:
+
+```bash
+social config cache ttl {total_in_seconds}
+```
+
+Useful presets:
+
+```bash
+social config cache mode live         # 15 minutes, default
+social config cache mode analytical   # 24 hours
+social config cache mode historical   # 1 week
+```
+
+Use command-level `--no-cache` only when freshness matters. It skips the cached
+read and refreshes the stored response after a successful upstream call.
+
 ## Environment variables
 
 Defaults point at production; override only for local dev or staging:
