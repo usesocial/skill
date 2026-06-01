@@ -10,7 +10,7 @@ Run the hosted setup command in an interactive terminal:
 curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-It prefers Bun, falls back to Homebrew, then npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social login`. The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+It prefers Bun, falls back to Homebrew, then npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social auth login`. The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
 
 ## Staying current
 
@@ -41,9 +41,9 @@ social --version
 social --help
 ```
 
-## `social login`
+## `social auth login`
 
-`login` runs the better-auth **device-authorization** flow. It is interactive — the CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
+`auth login` runs the better-auth **device-authorization** flow. It is interactive — the CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
 
 Flags:
 
@@ -53,11 +53,11 @@ Flags:
 | `--scope read` \| `read,write`        | Pick capability bundle. `read` is safer; `read,write` allows write endpoints. Default `read,write`.                         |
 | `--accept-pricing`                    | Pre-accept the seat checkout if needed.                                                                                     |
 
-After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social logout` clears both.
+After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social auth logout` clears both.
 
 ## Connecting a platform account
 
-`login` only authenticates the user against the social API. Each platform needs its own connection handshake:
+`auth login` only authenticates the user against the social API. Each platform needs its own connection handshake:
 
 ```bash
 social accounts connect linkedin --no-open    # Unipile hosted auth — prints the URL to share
@@ -88,8 +88,8 @@ The bearer token carries one of:
 Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
 ```bash
-social logout
-social login --scope read,write
+social auth logout
+social auth login --scope read,write
 ```
 
 ## Per-call account selection
@@ -149,8 +149,8 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
-| `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social login`.                                                          |
-| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social logout && social login --scope read,write`.                      |
+| `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social auth login`.                                                     |
+| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social auth logout && social auth login --scope read,write`.            |
 | `platform_not_connected`                             | No connected account for that platform.           | `social accounts connect linkedin` or `social accounts connect x`.       |
 | `account_not_found`                                  | `--account` value did not match.                  | `social accounts list <platform>`, reuse the printed handle/id.          |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
@@ -166,8 +166,8 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | Symptom                             | Likely cause                                     | Fix                                                                          |
 | ----------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
-| `Not signed in` / `unauthenticated` | No token or expired.                             | `social login`.                                                              |
-| `scope_missing`                     | Token has `read`, command needs `write`.         | `social logout && social login --scope read,write`.                          |
+| `Not signed in` / `unauthenticated` | No token or expired.                             | `social auth login`.                                                         |
+| `scope_missing`                     | Token has `read`, command needs `write`.         | `social auth logout && social auth login --scope read,write`.                 |
 | `platform_not_connected`            | Account for that platform not connected.         | `social accounts connect linkedin` / `social accounts connect x`.            |
 | Browser fails to open               | WSL or headless.                                 | Re-run with `--no-open`, surface the URL to the user.                        |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
