@@ -2,11 +2,7 @@
 
 Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
 
-`social x <subtree> <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and many list commands need **your own numeric X user ID** as a positional. Resolve once and reuse:
-
-```bash
-MY_X_ID=$(social x whoami | jq -r '.data.id')
-```
+`social x <subtree> <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and own-account commands infer the selected X account. Use `--account <handle-or-id>` to pick a different connected X account. Target-user reads take a numeric X user ID, or `me` for the selected account.
 
 X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users": [...], "media": [...], "tweets": [...] }, "meta": { "next_token": "...", "result_count": 25 } }`. `tweets get` and `whoami` return the single object at `.data`. Joins (author, media) live in `.includes` — populate them with `--expansions` and the matching `--*-fields`. The pagination token comes back as `.meta.next_token`.
 
@@ -23,11 +19,11 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 
 | Command             | Args                                                                                                                                                                                                                                         | Notes                                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `whoami`            | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` — capture and reuse.                                                 |
+| `whoami`            | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` for target-user lookups.                                             |
 | `user me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Same profile read as `whoami`.                                                                                 |
-| `user tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `whoami` or a search hit.   |
-| `user followers <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. `<id>` is the numeric X user ID. |
-| `user following <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. `<id>` is the numeric X user ID. |
+| `user tweets <id\|me>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. Numeric IDs target another user; `me` uses the selected account.                         |
+| `user followers <id\|me>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. Numeric IDs target another user; `me` uses the selected account. |
+| `user following <id\|me>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. Numeric IDs target another user; `me` uses the selected account. |
 
 ## `tweets`
 
@@ -40,13 +36,13 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 
 | Command               | Args                                                                                                                                                                       | Notes                                                                       |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `timelines home <id>` | `--limit 1-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, plus all `*-fields` / `--expansions` | Reverse-chronological home timeline. `<id>` is the authenticated X user ID. |
+| `timelines home [id\|me]` | `--limit 1-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, plus all `*-fields` / `--expansions` | Reverse-chronological home timeline. Omit the ID for the selected account. |
 
 ## `bookmarks`
 
 | Command               | Args                                                                              | Notes                                                     |
 | --------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `bookmarks list <id>` | `--limit 1-100`, `--cursor`, plus all `*-fields` / `--expansions` | The user's saved bookmarks. `<id>` is your own X user ID. |
+| `bookmarks list [id\|me]` | `--limit 1-100`, `--cursor`, plus all `*-fields` / `--expansions` | The user's saved bookmarks. Omit the ID for the selected account. |
 
 ## `dms`
 
@@ -93,24 +89,21 @@ The default response is sparse. Combine flags to enrich:
 # Smoke test.
 social x whoami
 
-# My ID — capture once.
-ID=$(social x whoami | jq -r '.data.id')
-
 # Last 50 bookmarks.
-social x bookmarks list "$ID" --limit 50 | jq '.data[].text'
+social x bookmarks list --limit 50 | jq '.data[].text'
 
 # Recent DM events.
 social x dms list --limit 50 > /tmp/x-dms.json
 jq '.data[] | {id, event_type, created_at, sender_id}' /tmp/x-dms.json
 
 # Home timeline, excluding replies.
-social x timelines home "$ID" --limit 25 --exclude replies
+social x timelines home --limit 25 --exclude replies
 
 # A specific user's recent tweets (resolve their ID via search or a known list).
 social x user tweets 44196397 --limit 30 --exclude retweets
 
 # Follower graph reads.
-social x user followers "$ID" --limit 100
+social x user followers me --limit 100
 social x user following 44196397 --limit 100
 
 # Recent search.
@@ -120,9 +113,9 @@ social x search recent "from:elonmusk" --limit 100 --sort-order recency
 social x tweets list 1843123456789012345 1843234567890123456
 
 # Paginate.
-PAGE1=$(social x bookmarks list "$ID" --limit 100)
+PAGE1=$(social x bookmarks list --limit 100)
 NEXT=$(echo "$PAGE1" | jq -r '.meta.next_token // empty')
-[ -n "$NEXT" ] && social x bookmarks list "$ID" --limit 100 --cursor "$NEXT"
+[ -n "$NEXT" ] && social x bookmarks list --limit 100 --cursor "$NEXT"
 ```
 
 ## jq recipes
@@ -162,11 +155,10 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 **Goal:** "Pull my last 30 days of tweets, rank by engagement."
 
 ```bash
-MY_ID=$(social x whoami | jq -r '.data.id')
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 
-social x user tweets "$MY_ID" \
+social x user tweets me \
   --limit 100 \
   --start-time "$SINCE" \
   --exclude replies,retweets \
@@ -189,18 +181,16 @@ jq '
 **Goal:** "Export my X bookmarks as a markdown reading list."
 
 ```bash
-MY_ID=$(social x whoami | jq -r '.data.id')
-
 PAGE_TOKEN=""
 PAGE=1
 > /tmp/bookmarks.ndjson
 while :; do
   if [ -n "$PAGE_TOKEN" ]; then
-    OUT=$(social x bookmarks list "$MY_ID" --limit 100 --cursor "$PAGE_TOKEN" \
+    OUT=$(social x bookmarks list --limit 100 --cursor "$PAGE_TOKEN" \
             --tweet-fields author_id,created_at,public_metrics --expansions author_id \
             --user-fields username)
   else
-    OUT=$(social x bookmarks list "$MY_ID" --limit 100 \
+    OUT=$(social x bookmarks list --limit 100 \
             --tweet-fields author_id,created_at,public_metrics --expansions author_id \
             --user-fields username)
   fi

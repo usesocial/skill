@@ -62,13 +62,9 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 | Page size     | `--limit` (1–100; 1–1000 for `user connections [user-id]`) | `--limit` (1–100; 5–100 for `user tweets`; 10–100 for `search recent`)           |
 | Pagination    | `--cursor` ← `.cursor`                              | `--cursor` ← `.meta.next_token`                                                   |
 | List shape    | `{ items: [...], cursor? }`                         | X v2 envelope: `{ data, includes, meta }`                                         |
-| Positional ID | identifier passed inline; CLI resolves URLs/handles | most list commands need **your numeric X user ID** as a positional                |
+| Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept numeric IDs or `me` |
 
-For X, resolve your ID once and reuse it for the session:
-
-```bash
-MY_X_ID=$(social x whoami | jq -r '.data.id')
-```
+For X, use `--account <handle-or-id>` to choose among connected accounts. Use `me` only when a target-user read requires an explicit user argument for the selected account.
 
 ## Choosing a command
 
