@@ -35,8 +35,8 @@ social x whoami 2>&1 | head -c 400            # for X work
 Interpret the output:
 
 - **Exit 0 with a JSON profile** → installed, signed in, connected. Proceed. (For X, capture `.data.id` — most X list commands need it as a positional.)
-- **`command not found: social`** → install: `bun install -g @usesocial/cli` (fall back to `npm install -g @usesocial/cli`). Re-probe.
-- **`unauthenticated`, `401`, `Not signed in`** → run `social login`. Interactive device flow that opens `${SOCIAL_WEB_URL}/device`; it cannot complete headlessly. Surface the verification URL/code and wait for the user to approve. `--no-open` prints the URL inline.
+- **`command not found: social`** → ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal. Re-probe after they finish.
+- **`unauthenticated`, `401`, `Not signed in`** → ask the user to run `social login` in an interactive terminal. The device flow prints the verification URL/code, tries to open `${SOCIAL_WEB_URL}/device`, and cannot complete headlessly.
 - **`platform_not_connected`** → run `social accounts connect linkedin` or `social accounts connect x` (`--no-open` to print the URL). The user approves the handshake in their browser.
 
 Do **not** background `social login` or `social accounts connect <platform>` — both wait on a foreground poll loop.
@@ -80,7 +80,7 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 
 ## Output handling
 
-- Capture `--json` to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin search people "query" --limit 100 --json > /tmp/people.json`. This also avoids re-billing the same query.
+- Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin search people "query" > /tmp/people.json`. This also avoids re-billing the same query.
 - Project only the fields you need with `jq` — full payloads are large and burn context fast.
 - For user-facing summaries, build a short markdown table from `jq` output rather than dumping raw JSON.
 - Surface errors verbatim — codes like `scope_missing`, `endpoint_not_available_in_v1`, `rate_limited`, `platform_not_connected` are precise. Full error catalog in `references/setup.md`.

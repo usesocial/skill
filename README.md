@@ -16,7 +16,7 @@ One `social` skill spanning both platforms, with progressive-disclosure referenc
 Install with `npx skills`:
 
 ```sh
-npx --yes skills add usesocial/skill -y -g all
+npx skills add usesocial/skill
 ```
 
 For local development:
@@ -29,13 +29,12 @@ The repo also carries Claude and Codex plugin manifests for agents that can cons
 
 ## Prerequisites
 
-The skill expects the `social` binary on `PATH`. If it is missing, the skill will install it and walk the user through `social login` (device flow, requires browser approval).
+The skill expects the `social` binary on `PATH`. If it is missing, ask the user
+before installing global tools, then have them run the setup command in an
+interactive terminal:
 
 ```sh
-brew tap usesocial/tap/cli           # Homebrew
-bun install -g @usesocial/cli            # or Bun
-npm install -g @usesocial/cli            # or npm
-social login                             # device-authorization sign-in
+curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
 Keep the skill current with `npx skills update social`. Re-run the relevant install command when you need to update the CLI.

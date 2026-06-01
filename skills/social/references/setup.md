@@ -4,17 +4,13 @@ How to get `social` working from a fresh machine and how to recover from auth fa
 
 ## Install the CLI
 
-Three supported routes — use whichever the user prefers; Homebrew is convenient on macOS/Linux, Bun/npm for Node-based setups:
+Run the hosted setup command in an interactive terminal:
 
 ```bash
-brew tap usesocial/tap/cli       # Homebrew
-# or
-bun install -g @usesocial/cli        # Bun
-# or
-npm install -g @usesocial/cli        # npm
+curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+It prefers Bun, falls back to Homebrew, then npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social login`. The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
 
 ## Staying current
 
@@ -47,18 +43,15 @@ social --help
 
 ## `social login`
 
-`login` runs the better-auth **device-authorization** flow. It is interactive — the CLI prints a verification URL and a user code, opens the browser to `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it.** Either run it in a separate terminal the user controls, or invoke it as a foreground Bash command and surface the verification URL/code so the user can approve.
+`login` runs the better-auth **device-authorization** flow. It is interactive — the CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
 
 Flags:
 
 | Flag                                  | Purpose                                                                                                                     |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `--email <addr>`                      | Skip the email prompt.                                                                                                      |
-| `--scope read` \| `read,write`        | Pick capability bundle. `read` is safer; `read,write` allows write endpoints. Default `read`.                               |
+| `--scope read` \| `read,write`        | Pick capability bundle. `read` is safer; `read,write` allows write endpoints. Default `read,write`.                         |
 | `--accept-pricing`                    | Pre-accept the seat checkout if needed.                                                                                     |
-| `--no-open`                           | Print the URL instead of opening a browser (use under WSL/SSH/inside-agent).                                                |
-| `--non-interactive`                   | Disable prompts; emit `{ status: "needs_input", missing: [...] }` JSON if anything is missing.                              |
-| `--json` / `--pretty`                 | Machine output. Pair with `--non-interactive` for scripted flows.                                                           |
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social logout` clears both.
 
