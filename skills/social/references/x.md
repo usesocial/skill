@@ -299,7 +299,7 @@ Use `--no-open` from inside an agent session so the URL lands in the chat — th
 
 ```bash
 # Aggregate first.
-social usage --platform x
+social usage
 
 # Then the recent firehose for the last 30 days.
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
