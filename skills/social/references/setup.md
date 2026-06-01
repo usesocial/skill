@@ -145,7 +145,7 @@ export SOCIAL_WEB_URL=http://localhost:3000
 
 ## Error catalog
 
-Errors arrive on stderr with a non-zero exit. In `--json` mode they print as
+Errors arrive on stderr with a non-zero exit. JSON-only command surfaces print
 `{ "error": "...", "type": "..." }`, with `status`, `body`, `issues`, or
 `retryAfterSeconds` when available. Surface messages verbatim — they are precise enough
 for the user to act on.
@@ -184,7 +184,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 The authoritative machine-readable command tree — use it when uncertain about a flag, a subtree, or whether something exists at all. Faster and cheaper than guessing:
 
 ```bash
-social schema --json | jq '.subCommands | keys'
-social schema --json | jq '.subCommands.linkedin.subCommands | keys'
-social schema --json | jq '.subCommands.x.subCommands.tweets.subCommands'
+social schema | jq '.subCommands | keys'
+social schema | jq '.subCommands.linkedin.subCommands | keys'
+social schema | jq '.subCommands.x.subCommands.tweets.subCommands'
 ```

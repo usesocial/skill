@@ -18,18 +18,18 @@ social schema | usage | accounts | linkedin | x | login | logout
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post search, inbox messages. Load `references/linkedin.md` for the full catalog and recipes.
 - **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts. Load `references/x.md` for the full catalog and recipes.
 - **`social usage`** — recent proxy calls or a billing summary (`--summary`), optionally `--platform linkedin|x`.
-- **`social schema [path] --json`** — authoritative machine-readable command tree. Cheaper than guessing.
+- **`social schema [path]`** — authoritative machine-readable command tree. Cheaper than guessing.
 - **`social login` / `social logout`** — session and scope. See `references/setup.md`.
 
-If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema --json` — do not invent endpoints.
+If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema` — do not invent endpoints.
 
 ## First-use setup
 
 Before the first call to a platform in a session, confirm the CLI is installed, the user is signed in, and that platform is connected. Run the probe for the platform you need — one call doubles as the connectivity check, so an authenticated user pays no extra round-trip:
 
 ```bash
-social linkedin whoami --json 2>&1 | head -c 400    # for LinkedIn work
-social x whoami --json 2>&1 | head -c 400            # for X work
+social linkedin whoami 2>&1 | head -c 400    # for LinkedIn work
+social x whoami 2>&1 | head -c 400            # for X work
 ```
 
 Interpret the output:
@@ -47,7 +47,7 @@ Full install, scope, billing, and troubleshooting detail lives in `references/se
 
 Shared across both platforms:
 
-- `--json` / `--pretty` — pick `--json` whenever output feeds analysis (parsing, filtering, summarising, saving); pipe through `jq`. Use `--pretty` only for small payloads the user reads inline. No flag prints a human-formatted view — don't parse it.
+- Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
 - `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against `social accounts list <platform>`.
 - `--no-cache` — bypass cached reads and refresh the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
@@ -66,7 +66,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 For X, resolve your ID once and reuse it for the session:
 
 ```bash
-MY_X_ID=$(social x whoami --json | jq -r '.data.id')
+MY_X_ID=$(social x whoami | jq -r '.data.id')
 ```
 
 ## Choosing a command
@@ -124,4 +124,4 @@ Loaded only when needed:
 - **`references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, jq recipes, and end-to-end playbooks (lead research, post engagement, paginated scrapes).
 - **`references/x.md`** — full X command catalog, field/expansion presets, output shapes, jq recipes, and end-to-end playbooks (content audit, bookmarks → markdown, search analysis, thread reconstruction).
 
-When uncertain about a flag or subtree, the authoritative source is `social <platform> <subtree> --help` and `social schema --json`. Both are cheap and always correct.
+When uncertain about a flag or subtree, the authoritative source is `social <platform> <subtree> --help` and `social schema`. Both are cheap and always correct.

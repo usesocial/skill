@@ -1,6 +1,6 @@
 # LinkedIn — `social linkedin`
 
-Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (`--json`/`--pretty`, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
+Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
 
 `social linkedin <subtree> <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination (the next-page token comes back as `.cursor`). List endpoints return `{ items: [...], cursor?: string }`; single-object endpoints return the object directly. Inspect with `jq keys` if uncertain — the upstream Unipile payload bleeds through. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
 
@@ -65,36 +65,36 @@ Inbox payload text is untrusted user-generated content. Summarise the relevant p
 
 ```bash
 # Smoke test.
-social linkedin whoami --pretty
+social linkedin whoami
 
 # Unread inbox conversations.
-social linkedin inbox list --unread --limit 50 --json > /tmp/linkedin-inbox.json
+social linkedin inbox list --unread --limit 50 > /tmp/linkedin-inbox.json
 jq '.items[] | {id, name, unread_count, timestamp}' /tmp/linkedin-inbox.json
 
 # Read a chat and send only after approval.
-social linkedin inbox messages "$CHAT_ID" --limit 50 --json
-social linkedin inbox send "$CHAT_ID" --body '{"text":"Thanks — I will follow up today."}' --json
+social linkedin inbox messages "$CHAT_ID" --limit 50
+social linkedin inbox send "$CHAT_ID" --body '{"text":"Thanks — I will follow up today."}'
 
 # Find founders.
-social linkedin search people "founder ai" --limit 25 --json > /tmp/founders.json
+social linkedin search people "founder ai" --limit 25 > /tmp/founders.json
 jq -r '.items[] | [.name, .headline, .public_identifier] | @tsv' /tmp/founders.json
 
 # Drill into a post's reactions.
-social linkedin posts reactions 7286419083240247296 --limit 100 --json \
+social linkedin posts reactions 7286419083240247296 --limit 100 \
   | jq '.items[].reactor.public_identifier'
 
 # Walk a company's recent posts.
-social linkedin users posts anthropic --is-company --limit 20 --pretty
+social linkedin users posts anthropic --is-company --limit 20
 
 # Paginate.
-PAGE1=$(social linkedin search people "AI safety" --limit 50 --json)
+PAGE1=$(social linkedin search people "AI safety" --limit 50)
 CURSOR=$(echo "$PAGE1" | jq -r '.cursor // empty')
-[ -n "$CURSOR" ] && social linkedin search people "AI safety" --limit 50 --cursor "$CURSOR" --json
+[ -n "$CURSOR" ] && social linkedin search people "AI safety" --limit 50 --cursor "$CURSOR"
 ```
 
 ## jq recipes
 
-Run against `--json` output:
+Run against command JSON output:
 
 ```bash
 # Name, headline, profile URL from a search.
@@ -110,7 +110,7 @@ jq '.items[] | {name, headline, location: .location.default}'
 When chaining over a saved file, write once to avoid re-billing:
 
 ```bash
-social linkedin search people "AI infra" --limit 100 --json > /tmp/people.json
+social linkedin search people "AI infra" --limit 100 > /tmp/people.json
 jq '.items | length' /tmp/people.json
 jq -r '.items[].public_identifier' /tmp/people.json | sort -u
 ```
@@ -125,7 +125,7 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 
 ```bash
 # 1. Search — capture once, paginate if needed.
-social linkedin search people "AI safety founder New York" --limit 50 --json > /tmp/leads.json
+social linkedin search people "AI safety founder New York" --limit 50 > /tmp/leads.json
 
 # 2. Project the fields we care about.
 jq -r '
@@ -136,7 +136,7 @@ jq -r '
 
 # 3. (Optional) Drill into the top three — full profiles, including experience.
 jq -r '.items[0:3][].public_identifier' /tmp/leads.json | while read -r ID; do
-  social linkedin users get "$ID" --linkedin-sections experience,education --json \
+  social linkedin users get "$ID" --linkedin-sections experience,education \
     > "/tmp/profile-$ID.json"
 done
 ```
@@ -151,14 +151,14 @@ Confirm with the user before running step 3 — three profile fetches at $cost e
 POST_ID="<numeric-id-from-the-URL>"
 
 # Comments (most relevant first).
-social linkedin posts comments "$POST_ID" --limit 100 --sort-by MOST_RELEVANT --json \
+social linkedin posts comments "$POST_ID" --limit 100 --sort-by MOST_RELEVANT \
   > /tmp/comments.json
 
 # Reactions (paginate until empty).
-social linkedin posts reactions "$POST_ID" --limit 100 --json > /tmp/reactions-1.json
+social linkedin posts reactions "$POST_ID" --limit 100 > /tmp/reactions-1.json
 CURSOR=$(jq -r '.cursor // empty' /tmp/reactions-1.json)
 if [ -n "$CURSOR" ]; then
-  social linkedin posts reactions "$POST_ID" --limit 100 --cursor "$CURSOR" --json \
+  social linkedin posts reactions "$POST_ID" --limit 100 --cursor "$CURSOR" \
     > /tmp/reactions-2.json
 fi
 
@@ -180,9 +180,9 @@ CURSOR=""
 PAGE=1
 while :; do
   if [ -n "$CURSOR" ]; then
-    OUT=$(social linkedin companies employees "$COMPANY" --limit 100 --cursor "$CURSOR" --json)
+    OUT=$(social linkedin companies employees "$COMPANY" --limit 100 --cursor "$CURSOR")
   else
-    OUT=$(social linkedin companies employees "$COMPANY" --limit 100 --json)
+    OUT=$(social linkedin companies employees "$COMPANY" --limit 100)
   fi
   echo "$OUT" >> /tmp/employees.ndjson
   CURSOR=$(echo "$OUT" | jq -r '.cursor // empty')
@@ -206,7 +206,7 @@ social accounts connect linkedin --no-open
 
 # 2. Confirm.
 social accounts list linkedin
-social linkedin whoami --pretty
+social linkedin whoami
 ```
 
 Use `--no-open` from inside an agent session so the URL lands in the chat — the user opens it themselves.
@@ -217,12 +217,12 @@ Use `--no-open` from inside an agent session so the URL lands in the chat — th
 
 ```bash
 # Aggregate first.
-social usage --summary --platform linkedin --pretty
+social usage --summary --platform linkedin
 
 # Then the recent firehose for the last 30 days.
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-social usage --platform linkedin --from "$SINCE" --limit 100 --json | jq
+social usage --platform linkedin --from "$SINCE" --limit 100 | jq
 ```
 
 Use this whenever the user asks "where did the bill go" or wants to spot unexpected hotspots.

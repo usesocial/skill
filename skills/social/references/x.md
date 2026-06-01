@@ -1,11 +1,11 @@
 # X — `social x`
 
-Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (`--json`/`--pretty`, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
+Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
 
 `social x <subtree> <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and many list commands need **your own numeric X user ID** as a positional. Resolve once and reuse:
 
 ```bash
-MY_X_ID=$(social x whoami --json | jq -r '.data.id')
+MY_X_ID=$(social x whoami | jq -r '.data.id')
 ```
 
 X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users": [...], "media": [...], "tweets": [...] }, "meta": { "next_token": "...", "result_count": 25 } }`. `tweets get` and `whoami` return the single object at `.data`. Joins (author, media) live in `.includes` — populate them with `--expansions` and the matching `--*-fields`. The pagination token comes back as `.meta.next_token`.
@@ -91,43 +91,43 @@ The default response is sparse. Combine flags to enrich:
 
 ```bash
 # Smoke test.
-social x whoami --pretty
+social x whoami
 
 # My ID — capture once.
-ID=$(social x whoami --json | jq -r '.data.id')
+ID=$(social x whoami | jq -r '.data.id')
 
 # Last 50 bookmarks.
-social x bookmarks list "$ID" --limit 50 --json | jq '.data[].text'
+social x bookmarks list "$ID" --limit 50 | jq '.data[].text'
 
 # Recent DM events.
-social x dms list --limit 50 --json > /tmp/x-dms.json
+social x dms list --limit 50 > /tmp/x-dms.json
 jq '.data[] | {id, event_type, created_at, sender_id}' /tmp/x-dms.json
 
 # Home timeline, excluding replies.
-social x timelines home "$ID" --limit 25 --exclude replies --json
+social x timelines home "$ID" --limit 25 --exclude replies
 
 # A specific user's recent tweets (resolve their ID via search or a known list).
-social x users tweets 44196397 --limit 30 --exclude retweets --pretty
+social x users tweets 44196397 --limit 30 --exclude retweets
 
 # Follower graph reads.
-social x users followers "$ID" --limit 100 --json
-social x users following 44196397 --limit 100 --json
+social x users followers "$ID" --limit 100
+social x users following 44196397 --limit 100
 
 # Recent search.
-social x search recent "from:elonmusk" --limit 100 --sort-order recency --json
+social x search recent "from:elonmusk" --limit 100 --sort-order recency
 
 # Fetch by ID — multiple.
-social x tweets list 1843123456789012345 1843234567890123456 --pretty
+social x tweets list 1843123456789012345 1843234567890123456
 
 # Paginate.
-PAGE1=$(social x bookmarks list "$ID" --limit 100 --json)
+PAGE1=$(social x bookmarks list "$ID" --limit 100)
 NEXT=$(echo "$PAGE1" | jq -r '.meta.next_token // empty')
-[ -n "$NEXT" ] && social x bookmarks list "$ID" --limit 100 --cursor "$NEXT" --json
+[ -n "$NEXT" ] && social x bookmarks list "$ID" --limit 100 --cursor "$NEXT"
 ```
 
 ## jq recipes
 
-Run against `--json` output:
+Run against command JSON output:
 
 ```bash
 # Top tweets by like count.
@@ -148,7 +148,7 @@ jq '.data[] | {id, text, created_at, metrics: .public_metrics}'
 When chaining over a saved file, write once to avoid re-billing:
 
 ```bash
-social x search recent "ai safety" --limit 100 --json > /tmp/search.json
+social x search recent "ai safety" --limit 100 > /tmp/search.json
 jq '.data | length' /tmp/search.json
 jq '.meta.next_token // empty' /tmp/search.json
 ```
@@ -162,7 +162,7 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 **Goal:** "Pull my last 30 days of tweets, rank by engagement."
 
 ```bash
-MY_ID=$(social x whoami --json | jq -r '.data.id')
+MY_ID=$(social x whoami | jq -r '.data.id')
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -171,7 +171,7 @@ social x users tweets "$MY_ID" \
   --start-time "$SINCE" \
   --exclude replies,retweets \
   --tweet-fields public_metrics,created_at \
-  --json > /tmp/my-tweets.json
+  > /tmp/my-tweets.json
 
 # Top 10 by likes.
 jq '
@@ -189,7 +189,7 @@ jq '
 **Goal:** "Export my X bookmarks as a markdown reading list."
 
 ```bash
-MY_ID=$(social x whoami --json | jq -r '.data.id')
+MY_ID=$(social x whoami | jq -r '.data.id')
 
 PAGE_TOKEN=""
 PAGE=1
@@ -198,11 +198,11 @@ while :; do
   if [ -n "$PAGE_TOKEN" ]; then
     OUT=$(social x bookmarks list "$MY_ID" --limit 100 --cursor "$PAGE_TOKEN" \
             --tweet-fields author_id,created_at,public_metrics --expansions author_id \
-            --user-fields username --json)
+            --user-fields username)
   else
     OUT=$(social x bookmarks list "$MY_ID" --limit 100 \
             --tweet-fields author_id,created_at,public_metrics --expansions author_id \
-            --user-fields username --json)
+            --user-fields username)
   fi
   echo "$OUT" >> /tmp/bookmarks.ndjson
   PAGE_TOKEN=$(echo "$OUT" | jq -r '.meta.next_token // empty')
@@ -233,7 +233,7 @@ social x search recent "$TOPIC" \
   --limit 100 --sort-order relevancy \
   --tweet-fields public_metrics,created_at \
   --expansions author_id --user-fields username,name,verified \
-  --json > /tmp/search.json
+  > /tmp/search.json
 
 # Top 10 by engagement = likes + 2*retweets.
 jq -r '
@@ -259,7 +259,7 @@ jq -r '
 TWEET_ID="<numeric-id-from-the-URL>"
 
 # 1. Get the root tweet's conversation_id.
-ROOT=$(social x tweets get "$TWEET_ID" --tweet-fields conversation_id --json)
+ROOT=$(social x tweets get "$TWEET_ID" --tweet-fields conversation_id)
 CONV_ID=$(echo "$ROOT" | jq -r '.data.conversation_id')
 
 # 2. Search for all tweets in the conversation (recent window only).
@@ -267,7 +267,7 @@ social x search recent "conversation_id:$CONV_ID" \
   --limit 100 \
   --tweet-fields in_reply_to_user_id,referenced_tweets,created_at,public_metrics \
   --expansions author_id,in_reply_to_user_id --user-fields username \
-  --json > /tmp/thread.json
+  > /tmp/thread.json
 
 # 3. Print as a flat timeline.
 jq -r '
@@ -288,7 +288,7 @@ social accounts connect x --no-open
 
 # 2. Confirm.
 social accounts list x
-social x whoami --pretty
+social x whoami
 ```
 
 Use `--no-open` from inside an agent session so the URL lands in the chat — the user opens it themselves.
@@ -299,10 +299,10 @@ Use `--no-open` from inside an agent session so the URL lands in the chat — th
 
 ```bash
 # Aggregate first.
-social usage --summary --platform x --pretty
+social usage --summary --platform x
 
 # Then the recent firehose for the last 30 days.
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-social usage --platform x --from "$SINCE" --limit 100 --json | jq
+social usage --platform x --from "$SINCE" --limit 100 | jq
 ```
