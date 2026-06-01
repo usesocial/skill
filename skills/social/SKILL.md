@@ -17,7 +17,8 @@ social schema | usage | accounts | auth | linkedin | x
 - **`social accounts …`** — connect, reconnect, disconnect, and list LinkedIn/X accounts.
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post search, inbox messages. Load `references/linkedin.md` for the full catalog and recipes.
 - **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts. Load `references/x.md` for the full catalog and recipes.
-- **`social usage`** — recent proxy calls or a billing summary (`--summary`), optionally `--platform linkedin|x`.
+- **`social usage`** — aggregate proxy usage and billing stats, optionally `--platform linkedin|x`.
+- **`social usage logs`** — recent proxy calls, optionally `--platform linkedin|x`.
 - **`social schema [path]`** — authoritative machine-readable command tree. Cheaper than guessing.
 - **`social auth …`** — login, whoami, logout, session, seats, and scope. See `references/setup.md`.
 
@@ -105,7 +106,7 @@ social auth logout
 social auth login --scope read,write
 ```
 
-Fresh upstream proxy calls are metered; cache hits are free. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage --summary` (optionally `--platform linkedin|x`).
+Fresh upstream proxy calls are metered; cache hits are free. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage` (optionally `--platform linkedin|x`).
 
 ## Safety rules
 

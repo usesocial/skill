@@ -216,12 +216,12 @@ Use `--no-open` from inside an agent session so the URL lands in the chat — th
 
 ```bash
 # Aggregate first.
-social usage --summary --platform linkedin
+social usage --platform linkedin
 
 # Then the recent firehose for the last 30 days.
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-social usage --platform linkedin --from "$SINCE" --limit 100 | jq
+social usage logs --platform linkedin --from "$SINCE" --limit 100 | jq
 ```
 
 Use this whenever the user asks "where did the bill go" or wants to spot unexpected hotspots.
