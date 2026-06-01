@@ -1,6 +1,6 @@
 # X — `social x`
 
-Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
+Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
 
 `social x <subtree> <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and many list commands need **your own numeric X user ID** as a positional. Resolve once and reuse:
 

@@ -120,8 +120,9 @@ social config cache mode analytical   # 24 hours
 social config cache mode historical   # 1 week
 ```
 
-Use command-level `--no-cache` only when freshness matters. It skips the cached
-read and refreshes the stored response after a successful upstream call.
+Use command-level `--no-cache` only when freshness matters and command help
+lists the flag. It skips the cached read and refreshes the stored response after
+a successful upstream call.
 
 ## Environment variables
 

@@ -1,6 +1,6 @@
 # LinkedIn — `social linkedin`
 
-Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
+Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
 
 `social linkedin <subtree> <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination (the next-page token comes back as `.cursor`). List endpoints return `{ items: [...], cursor?: string }`; single-object endpoints return the object directly. Inspect with `jq keys` if uncertain — the upstream Unipile payload bleeds through. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
 

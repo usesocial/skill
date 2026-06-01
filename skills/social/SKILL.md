@@ -50,7 +50,7 @@ Shared across both platforms:
 
 - Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
 - `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against `social accounts list <platform>`.
-- `--no-cache` — bypass cached reads and refresh the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
+- `--no-cache` — available only on cacheable read commands. Bypasses cached reads and refreshes the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 
 Default caching: allowlisted GET reads use a 15 minute TTL. Change the local default with `social config cache ttl {total_in_seconds}`; `social config cache mode live|analytical|historical` provides presets. Details live in `references/setup.md`.
