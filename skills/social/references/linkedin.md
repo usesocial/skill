@@ -37,10 +37,10 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 ## `search`
 
-| Command                    | Args                                                            | Notes                                                        |
-| -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------ |
-| `search people <keywords>` | `--limit 1-100`, `--cursor`, `--api recruiter\|sales_navigator` | Default API is `classic` (omit `--api`). Quote the keywords. |
-| `search posts <keywords>`  | `--limit 1-100`, `--cursor`, `--api recruiter\|sales_navigator` | Same flags as people.                                        |
+| Command                    | Args                          | Notes                                             |
+| -------------------------- | ----------------------------- | ------------------------------------------------- |
+| `search people <keywords>` | `--account`, `--no-cache`     | Quote the keywords.                              |
+| `search posts <keywords>`  | `--account`, `--no-cache`     | Quote the keywords.                              |
 
 ## `companies`
 
@@ -76,7 +76,7 @@ social linkedin inbox messages "$CHAT_ID" --limit 50
 social linkedin inbox send "$CHAT_ID" --body '{"text":"Thanks — I will follow up today."}'
 
 # Find founders.
-social linkedin search people "founder ai" --limit 25 > /tmp/founders.json
+social linkedin search people "founder ai" > /tmp/founders.json
 jq -r '.items[] | [.name, .headline, .public_identifier] | @tsv' /tmp/founders.json
 
 # Drill into a post's reactions.
@@ -86,10 +86,9 @@ social linkedin posts reactions 7286419083240247296 --limit 100 \
 # Walk a company's recent posts.
 social linkedin users posts anthropic --is-company --limit 20
 
-# Paginate.
-PAGE1=$(social linkedin search people "AI safety" --limit 50)
-CURSOR=$(echo "$PAGE1" | jq -r '.cursor // empty')
-[ -n "$CURSOR" ] && social linkedin search people "AI safety" --limit 50 --cursor "$CURSOR"
+# Capture once before filtering.
+social linkedin search people "AI safety" > /tmp/people.json
+jq -r '.items[] | [.name, .headline] | @tsv' /tmp/people.json
 ```
 
 ## jq recipes
@@ -110,7 +109,7 @@ jq '.items[] | {name, headline, location: .location.default}'
 When chaining over a saved file, write once to avoid re-billing:
 
 ```bash
-social linkedin search people "AI infra" --limit 100 > /tmp/people.json
+social linkedin search people "AI infra" > /tmp/people.json
 jq '.items | length' /tmp/people.json
 jq -r '.items[].public_identifier' /tmp/people.json | sort -u
 ```
@@ -124,8 +123,8 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 **Goal:** "Find AI safety founders in NYC and give me their headlines and profile URLs."
 
 ```bash
-# 1. Search — capture once, paginate if needed.
-social linkedin search people "AI safety founder New York" --limit 50 > /tmp/leads.json
+# 1. Search — capture once.
+social linkedin search people "AI safety founder New York" > /tmp/leads.json
 
 # 2. Project the fields we care about.
 jq -r '
