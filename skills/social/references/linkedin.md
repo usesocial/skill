@@ -13,17 +13,17 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | `social accounts disconnect linkedin <account>`          | Disconnect an account.                                      |
 | `social accounts list linkedin [--include-disconnected]` | List connected LinkedIn accounts.                           |
 
-## `users`
+## `user`
 
 | Command                          | Args                                                                                 | Notes                                                                                                                             |
 | -------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | `whoami`                         | —                                                                                    | Connected profile. Smoke test.                                                                                                    |
-| `users me`                       | —                                                                                    | Same profile read as `whoami`.                                                                                                    |
-| `users get <identifier>`         | `--linkedin-sections <csv>`, `--linkedin-api recruiter\|sales_navigator`, `--notify` | `<identifier>` is a public ID (`john-smith-1a2b`), a provider ID starting `ACo…`/`ADo…`, or `me`. `--notify` is rare — leave off. |
-| `users connections [user-id]`    | `--limit 1-1000`, `--cursor`, `--filter <name>`                                      | Omitting `user-id` lists the selected account's connections. Higher limit than the standard 100.                                  |
-| `users posts <identifier>`       | `--limit 1-100`, `--cursor`, `--is-company`                                          | Pass `--is-company` when the identifier is a numeric company ID.                                                                  |
+| `user me`                       | —                                                                                    | Same profile read as `whoami`.                                                                                                    |
+| `user get <identifier>`         | `--linkedin-sections <csv>`, `--linkedin-api recruiter\|sales_navigator`, `--notify` | `<identifier>` is a public ID (`john-smith-1a2b`), a provider ID starting `ACo…`/`ADo…`, or `me`. `--notify` is rare — leave off. |
+| `user connections [user-id]`    | `--limit 1-1000`, `--cursor`, `--filter <name>`                                      | Omitting `user-id` lists the selected account's connections. Higher limit than the standard 100.                                  |
+| `user posts <identifier>`       | `--limit 1-100`, `--cursor`, `--is-company`                                          | Pass `--is-company` when the identifier is a numeric company ID.                                                                  |
 
-`me` works for `users get me` and `users posts me`. Omit the positional for your own connections; pass a user ID only when targeting another account's connections.
+`me` works for `user get me` and `user posts me`. Omit the positional for your own connections; pass a user ID only when targeting another account's connections.
 
 ## `posts`
 
@@ -87,7 +87,7 @@ social linkedin posts reactions 7286419083240247296 --limit 100 \
   | jq '.items[].reactor.public_identifier'
 
 # Walk a company's recent posts.
-social linkedin users posts anthropic --is-company --limit 20
+social linkedin user posts anthropic --is-company --limit 20
 
 # Capture once before filtering.
 social linkedin search people "AI safety" > /tmp/people.json
@@ -138,7 +138,7 @@ jq -r '
 
 # 3. (Optional) Drill into the top three — full profiles, including experience.
 jq -r '.items[0:3][].public_identifier' /tmp/leads.json | while read -r ID; do
-  social linkedin users get "$ID" --linkedin-sections experience,education \
+  social linkedin user get "$ID" --linkedin-sections experience,education \
     > "/tmp/profile-$ID.json"
 done
 ```

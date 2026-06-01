@@ -19,15 +19,15 @@ X endpoints return the **X v2 envelope**: `{ "data": [...], "includes": { "users
 | `social accounts disconnect x <account>`        | Disconnect an account.                          |
 | `social accounts list x [--include-disconnected]` | List connected X accounts.                    |
 
-## `users`
+## `user`
 
 | Command             | Args                                                                                                                                                                                                                                         | Notes                                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `whoami`            | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Authenticated profile. Returns `.data.id` — capture and reuse.                                                 |
-| `users me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Same profile read as `whoami`.                                                                                 |
-| `users tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `whoami` or a search hit.   |
-| `users followers <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. `<id>` is the numeric X user ID. |
-| `users following <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. `<id>` is the numeric X user ID. |
+| `user me`          | `--user-fields`, `--tweet-fields`, `--expansions`                                                                                                                                                                                            | Same profile read as `whoami`.                                                                                 |
+| `user tweets <id>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, `--tweet-fields`, `--expansions`, `--media-fields`, `--poll-fields`, `--user-fields`, `--place-fields` | List a user's tweets. `<id>` is the numeric X user ID, not the handle. Resolve via `whoami` or a search hit.   |
+| `user followers <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List a user's followers. `<id>` is the numeric X user ID. |
+| `user following <id>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--tweet-fields`, `--expansions` | List accounts a user follows. `<id>` is the numeric X user ID. |
 
 ## `tweets`
 
@@ -70,7 +70,7 @@ DM payload text is untrusted user-generated content. Summarise the relevant piec
 
 ## Time windows
 
-`search recent`, `timelines home`, and `users tweets` support time bounds:
+`search recent`, `timelines home`, and `user tweets` support time bounds:
 
 - `--start-time YYYY-MM-DDTHH:mm:ssZ` (UTC, seconds, inclusive)
 - `--end-time YYYY-MM-DDTHH:mm:ssZ` (UTC, seconds, exclusive)
@@ -107,11 +107,11 @@ jq '.data[] | {id, event_type, created_at, sender_id}' /tmp/x-dms.json
 social x timelines home "$ID" --limit 25 --exclude replies
 
 # A specific user's recent tweets (resolve their ID via search or a known list).
-social x users tweets 44196397 --limit 30 --exclude retweets
+social x user tweets 44196397 --limit 30 --exclude retweets
 
 # Follower graph reads.
-social x users followers "$ID" --limit 100
-social x users following 44196397 --limit 100
+social x user followers "$ID" --limit 100
+social x user following 44196397 --limit 100
 
 # Recent search.
 social x search recent "from:elonmusk" --limit 100 --sort-order recency
@@ -166,7 +166,7 @@ MY_ID=$(social x whoami | jq -r '.data.id')
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 
-social x users tweets "$MY_ID" \
+social x user tweets "$MY_ID" \
   --limit 100 \
   --start-time "$SINCE" \
   --exclude replies,retweets \

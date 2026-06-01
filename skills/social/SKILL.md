@@ -59,7 +59,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 
 |               | LinkedIn (`social linkedin …`)                      | X (`social x …`)                                                                  |
 | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Page size     | `--limit` (1–100; 1–1000 for `users connections [user-id]`) | `--limit` (1–100; 5–100 for `users tweets`; 10–100 for `search recent`)           |
+| Page size     | `--limit` (1–100; 1–1000 for `user connections [user-id]`) | `--limit` (1–100; 5–100 for `user tweets`; 10–100 for `search recent`)           |
 | Pagination    | `--cursor` ← `.cursor`                              | `--cursor` ← `.meta.next_token`                                                   |
 | List shape    | `{ items: [...], cursor? }`                         | X v2 envelope: `{ data, includes, meta }`                                         |
 | Positional ID | identifier passed inline; CLI resolves URLs/handles | most list commands need **your numeric X user ID** as a positional                |
