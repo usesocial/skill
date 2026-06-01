@@ -19,7 +19,7 @@ social schema | usage | accounts | auth | linkedin | x
 - **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts. Load `references/x.md` for the full catalog and recipes.
 - **`social usage`** — aggregate proxy usage and billing stats.
 - **`social usage logs`** — recent proxy calls, optionally `--platform linkedin|x`.
-- **`social schema [path]`** — authoritative machine-readable command tree. Cheaper than guessing.
+- **`social schema [path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all leaf commands.
 - **`social auth …`** — login, whoami, logout, session, seats, and scope. See `references/setup.md`.
 
 If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema` — do not invent endpoints.
@@ -75,7 +75,9 @@ MY_X_ID=$(social x whoami | jq -r '.data.id')
 1. Identify the **platform** (LinkedIn vs X — "Twitter" → X) and load that reference.
 2. Identify the **noun**: profile/user, post/tweet, company, search, bookmark, timeline, inbox/DM, comment, reaction.
 3. Identify the **action**: fetch one, list many, search, drill into a sub-resource.
-4. Construct `social <platform> <noun> <verb>` and add flags. Verify with `--help` if uncertain.
+4. Construct `social <platform> <noun> <verb>` and add flags. Verify with `social schema <path>` or `--help` if uncertain.
+
+For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. For one command, inspect the leaf directly with `social schema <path>` so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
 
 When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, extract the trailing numeric ID.
 
@@ -106,7 +108,7 @@ social auth logout
 social auth login --scope read,write
 ```
 
-Fresh upstream proxy calls are metered; cache hits are free. Prefer one `--limit 100` over many small pages, but **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips — bookmarks, timelines, and large company employee lists can run thousands deep. For high-fanout work, quote the cost back to the user before running it. Audit spend with `social usage`.
+Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema <path> | jq '.cost'` or use `social schema --leaves` and read `.commands[PATH].cost`. Prefer cached reads unless freshness matters; use `--no-cache` only when the schema shows the command is cacheable and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social usage` and `social usage logs`.
 
 ## Safety rules
 
@@ -125,4 +127,4 @@ Loaded only when needed:
 - **`references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, jq recipes, and end-to-end playbooks (lead research, post engagement, paginated scrapes).
 - **`references/x.md`** — full X command catalog, field/expansion presets, output shapes, jq recipes, and end-to-end playbooks (content audit, bookmarks → markdown, search analysis, thread reconstruction).
 
-When uncertain about a flag or subtree, the authoritative source is `social <platform> <subtree> --help` and `social schema`. Both are cheap and always correct.
+When uncertain about a flag or subtree, the authoritative source is `social schema --leaves`, `social schema <path>`, and `social <platform> <subtree> --help`. All are cheap and always correct.
