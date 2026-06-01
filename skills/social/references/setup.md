@@ -55,6 +55,11 @@ Flags:
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social auth logout` clears both.
 
+Use `social auth whoami` to inspect auth state. It always prints compact JSON
+with `status`, credential namespace/path, verified session data when available,
+and seat counts when the session is online. It replaces the old `auth status`
+probe.
+
 ## Connecting a platform account
 
 `auth login` only authenticates the user against the social API. Each platform needs its own connection handshake:

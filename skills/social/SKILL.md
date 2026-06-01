@@ -19,7 +19,7 @@ social schema | usage | accounts | auth | linkedin | x
 - **`social x …`** — tweets, timelines, bookmarks, DMs, recent search, user posts. Load `references/x.md` for the full catalog and recipes.
 - **`social usage`** — recent proxy calls or a billing summary (`--summary`), optionally `--platform linkedin|x`.
 - **`social schema [path]`** — authoritative machine-readable command tree. Cheaper than guessing.
-- **`social auth …`** — login, status, whoami, logout, session, and scope. See `references/setup.md`.
+- **`social auth …`** — login, whoami, logout, session, seats, and scope. See `references/setup.md`.
 
 If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema` — do not invent endpoints.
 
