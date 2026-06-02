@@ -15,7 +15,7 @@ social account | schema | x | linkedin
 ```
 
 - **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
-- **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all leaf commands.
+- **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all runnable commands.
 - **`social x …`** — profiles, tweets, timeline, bookmarks, messages, search, and user graphs. Load `references/x.md` for the full catalog and recipes.
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post/job/company search, messages. Load `references/linkedin.md` for the full catalog and recipes.
 
@@ -35,7 +35,7 @@ Interpret the output:
 - **Exit 0 with a wrapped JSON profile** → installed, signed in, connected. Proceed.
 - **`command not found: social`** → ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal. Re-probe after they finish.
 - **`unauthenticated`, `401`, `Not signed in`** → ask the user to run `social account login` in an interactive terminal. The device flow prints the verification URL/code, tries to open `${SOCIAL_WEB_URL}/device`, and cannot complete headlessly.
-- **`platform_not_connected`** → run `social account connect linkedin` or `social account connect x` (`--no-open` to print the URL). The user approves the handshake in their browser.
+- **`platform_not_connected`** → run `social account connect linkedin` or `social account connect x`. In an agent/non-TTY run, the CLI prints the handoff URL to stderr; the user approves the handshake in their browser.
 
 Do **not** background `social account login` or `social account connect <platform>` — both wait on a foreground poll loop.
 
@@ -71,7 +71,7 @@ For X, use `--account <handle-or-id>` to choose among connected accounts. Use `m
 3. Identify the **action**: fetch one, list many, search, drill into a sub-resource.
 4. Construct `social <platform> <command>` and add flags. Verify with `social schema "<command path>"` or `--help` if uncertain.
 
-For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x search"]`. For one command, inspect the leaf directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
+For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x search"]`. For one command, inspect it directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
 
 When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, extract the trailing numeric ID.
 
@@ -89,7 +89,7 @@ Exit codes are stable:
 | `0` | Success | Continue. |
 | `2` | Usage or validation error | Fix args, flags, IDs, JSON body, or local input. |
 | `3` | Not found | Check the ID or select a different resource. |
-| `4` | Auth or scope error | Run `social account login`, or re-login with the needed scope. |
+| `4` | Auth or scope error | Run `social account login`, or log out and choose the needed scope. |
 | `5` | API or unexpected error | Retry later or surface the server error. |
 | `7` | Rate limited | Back off; JSON errors may include `retryAfterSeconds`. |
 
@@ -99,8 +99,10 @@ The bearer token carries one of `read` or `read,write`. Every read command works
 
 ```bash
 social account logout
-social account login --scope read,write
+social account login
 ```
+
+Choose Read + Write in the login prompt.
 
 Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `--no-cache` only when the schema shows the command is cacheable and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
 

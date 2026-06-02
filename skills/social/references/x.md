@@ -10,8 +10,8 @@ X commands return the standard `social` envelope: `{ "account": {...}, "data": [
 
 | Command                                         | Purpose                                         |
 | ----------------------------------------------- | ----------------------------------------------- |
-| `social account connect x [--no-open]`          | OAuth handshake. Opens the web app.             |
-| `social account reconnect x <account> [--no-open]` | Re-auth after token revoke.                  |
+| `social account connect x`          | OAuth handshake. Opens the web app on a TTY; prints the URL on non-TTY. |
+| `social account reconnect x <account>` | Re-auth after token revoke.                  |
 | `social account disconnect x <account>`         | Disconnect an account.                          |
 | `social account`                                | Inspect signed-in user and connected accounts.  |
 
@@ -279,7 +279,7 @@ Only works for conversations in the recent-search window.
 
 ```bash
 # 1. Connect. The CLI prepares another seat if billing needs one.
-social account connect x --no-open
+social account connect x
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
 # 2. Confirm.
@@ -287,7 +287,7 @@ social account
 social x profile
 ```
 
-Use `--no-open` from inside an agent session so the URL lands in the chat — the user opens it themselves.
+From inside an agent/non-TTY session, the CLI prints the OAuth URL to stderr so the user can open it themselves.
 
 ### 6. Billing & usage audit
 

@@ -8,8 +8,8 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 | Command                                                  | Purpose                                                     |
 | -------------------------------------------------------- | ----------------------------------------------------------- |
-| `social account connect linkedin [--no-open]`            | Hosted-auth handshake (Unipile). Opens the web app.         |
-| `social account reconnect linkedin <account> [--no-open]` | Re-auth an existing account.                              |
+| `social account connect linkedin`            | Hosted-auth handshake (Unipile). Opens the web app on a TTY; prints the URL on non-TTY. |
+| `social account reconnect linkedin <account>` | Re-auth an existing account.                            |
 | `social account disconnect linkedin <account>`           | Disconnect an account.                                      |
 | `social account`                                         | Inspect signed-in user and connected accounts.              |
 
@@ -213,7 +213,7 @@ The safety cap (`PAGE -gt 2`) prevents an unintended 10,000-employee scrape — 
 
 ```bash
 # 1. Connect. The CLI prepares another seat if billing needs one.
-social account connect linkedin --no-open
+social account connect linkedin
 # (CLI prints a URL — surface it to the user, wait for them to approve.)
 
 # 2. Confirm.
@@ -221,7 +221,7 @@ social account
 social linkedin profile
 ```
 
-Use `--no-open` from inside an agent session so the URL lands in the chat — the user opens it themselves.
+From inside an agent/non-TTY session, the CLI prints the hosted-auth URL to stderr so the user can open it themselves.
 
 ### 5. Billing & usage audit
 

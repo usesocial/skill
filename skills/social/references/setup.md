@@ -42,15 +42,7 @@ social --help
 
 ## `social account login`
 
-`account login` runs the better-auth **device-authorization** flow. It is interactive — the CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
-
-Flags:
-
-| Flag                                  | Purpose                                                                                                                     |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `--email <addr>`                      | Skip the email prompt.                                                                                                      |
-| `--scope read` \| `read,write`        | Pick capability bundle. `read` is safer; `read,write` allows write endpoints. Default `read,write`.                         |
-| `--accept-pricing`                    | Pre-accept the seat checkout if needed.                                                                                     |
+`account login` runs the better-auth **device-authorization** flow. It is fully interactive: choose Read or Read + Write, enter email, approve the browser request, and confirm billing checkout if a seat is needed. The CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social account logout` clears both.
 
@@ -61,11 +53,11 @@ Use bare `social account` to inspect auth state and connected accounts. It alway
 `account login` only authenticates the user against the social API. Each platform needs its own connection handshake:
 
 ```bash
-social account connect linkedin --no-open    # Unipile hosted auth — prints the URL to share
-social account connect x --no-open           # X OAuth handshake — prints the URL to share
+social account connect linkedin    # Unipile hosted auth
+social account connect x           # X OAuth handshake
 ```
 
-The CLI polls for up to 5 minutes until the connection appears in bare `social account`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the handoff URL to stderr so the user can open it themselves. It polls for up to 5 minutes until the connection appears in bare `social account`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
 
 To swap accounts:
 
@@ -90,8 +82,10 @@ Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
 ```bash
 social account logout
-social account login --scope read,write
+social account login
 ```
+
+Choose Read + Write in the login prompt.
 
 ## Per-call account selection
 
@@ -152,7 +146,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account login`.                                                  |
-| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout && social account login --scope read,write`.      |
+| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account login` and choose Read + Write. |
 | `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`.         |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed handle/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
@@ -169,9 +163,9 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | ----------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
 | `Not signed in` / `unauthenticated` | No token or expired.                             | `social account login`.                                                      |
-| `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout && social account login --scope read,write`.          |
+| `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account login` and choose Read + Write. |
 | `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect x`.              |
-| Browser fails to open               | WSL or headless.                                 | Re-run with `--no-open`, surface the URL to the user.                        |
+| Browser fails to open               | WSL or headless.                                 | Re-run from the agent/non-TTY context and surface the printed URL to the user. |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
 
 ## `social schema`
