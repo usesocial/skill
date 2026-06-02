@@ -15,7 +15,7 @@ social account | schema | x | linkedin
 ```
 
 - **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
-- **`social schema [path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all leaf commands.
+- **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all leaf commands.
 - **`social x …`** — profiles, tweets, timeline, bookmarks, messages, search, and user graphs. Load `references/x.md` for the full catalog and recipes.
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post/job/company search, messages. Load `references/linkedin.md` for the full catalog and recipes.
 
@@ -69,9 +69,9 @@ For X, use `--account <handle-or-id>` to choose among connected accounts. Use `m
 1. Identify the **platform** (LinkedIn vs X — "Twitter" → X) and load that reference.
 2. Identify the **noun**: profile/user, post/tweet, company, search, bookmark, timeline, message, comment, reaction.
 3. Identify the **action**: fetch one, list many, search, drill into a sub-resource.
-4. Construct `social <platform> <command>` and add flags. Verify with `social schema <path>` or `--help` if uncertain.
+4. Construct `social <platform> <command>` and add flags. Verify with `social schema "<command path>"` or `--help` if uncertain.
 
-For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. For one command, inspect the leaf directly with `social schema <path>` so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
+For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x search"]`. For one command, inspect the leaf directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
 
 When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, extract the trailing numeric ID.
 
@@ -102,7 +102,7 @@ social account logout
 social account login --scope read,write
 ```
 
-Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema <path> | jq '.cost'` or use `social schema --leaves` and read `.commands[PATH].cost`. Prefer cached reads unless freshness matters; use `--no-cache` only when the schema shows the command is cacheable and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
+Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `--no-cache` only when the schema shows the command is cacheable and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
 
 ## Safety rules
 
@@ -121,4 +121,4 @@ Loaded only when needed:
 - **`references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, jq recipes, and end-to-end playbooks (lead research, post engagement, paginated scrapes).
 - **`references/x.md`** — full X command catalog, field/expansion presets, output shapes, jq recipes, and end-to-end playbooks (content audit, bookmarks → markdown, search analysis, thread reconstruction).
 
-When uncertain about a flag or subtree, the authoritative source is `social schema --leaves`, `social schema <path>`, and `social <platform> <subtree> --help`. All are cheap and always correct.
+When uncertain about a flag or subtree, the authoritative source is `social schema --leaves`, `social schema "<command path>"`, and `social <platform> <subtree> --help`. All are cheap and always correct.
