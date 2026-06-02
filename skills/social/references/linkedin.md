@@ -36,10 +36,12 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 ## Search
 
-| Command                    | Args                      | Notes                |
-| -------------------------- | ------------------------- | -------------------- |
-| `search people <keywords>` | `--account`, `--no-cache` | Quote the keywords.  |
-| `search posts <keywords>`  | `--account`, `--no-cache` | Quote the keywords.  |
+| Command                       | Args                                             | Notes               |
+| ----------------------------- | ------------------------------------------------ | ------------------- |
+| `search people <keywords>`    | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
+| `search posts <keywords>`     | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
+| `search jobs <keywords>`      | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
+| `search companies <keywords>` | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
 
 ## Companies
 

@@ -17,7 +17,7 @@ social account | schema | x | linkedin
 - **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
 - **`social schema [path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all leaf commands.
 - **`social x …`** — profiles, tweets, timeline, bookmarks, messages, search, and user graphs. Load `references/x.md` for the full catalog and recipes.
-- **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post search, messages. Load `references/linkedin.md` for the full catalog and recipes.
+- **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post/job/company search, messages. Load `references/linkedin.md` for the full catalog and recipes.
 
 If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema` — do not invent endpoints.
 
