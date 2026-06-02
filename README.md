@@ -1,13 +1,13 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` for agent-run distribution across LinkedIn and X — outreach, posting, audience insights, inbox/DM triage, account research, billing audits — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` for agent-run distribution across LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — and how to handle setup, scopes, and output formats.
 
 ## What ships
 
 One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my X bookmarks") and is also invokable as `/social`.
 
 - **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, billing, safety, and how to pick a platform reference.
-- **`skills/social/references/setup.md`** — install, `social auth login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
+- **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
 - **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
 - **`skills/social/references/x.md`** — full X command catalog, field/expansion presets, output shapes, `jq` recipes, and end-to-end playbooks.
 
