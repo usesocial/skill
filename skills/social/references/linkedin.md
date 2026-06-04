@@ -13,14 +13,18 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | `social account disconnect linkedin <account>`           | Disconnect an account.                                      |
 | `social account`                                         | Inspect signed-in user and connected accounts.              |
 
-## Profiles and connections
+## Profiles, connections, and requests
 
 | Command                         | Args                                                                                 | Notes                                                                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | `profile [user=me]`             | `--linkedin-sections <csv>`, `--linkedin-api recruiter\|sales_navigator`, `--notify` | Connected profile by default. Pass a public ID (`john-smith-1a2b`), LinkedIn ID starting `ACo…`/`ADo…`, profile URL, or `me`. `--notify` is rare — leave off. |
 | `connections [user=me]`         | `--limit 1-1000`, `--cursor`, `--filter <name>`                                      | Omitting the positional lists the selected account's connections. Higher limit than the standard 100.                              |
 | `posts [user=me]`               | `--limit 1-100`, `--cursor`, `--is-company`                                          | Pass `--is-company` when the identifier is a numeric company ID.                                                                  |
-| `connect <profile> [message]`   | —                                                                                    | Write scope required. Confirm before sending. Relation request responses return `id`.                                              |
+| `requests send <profile> [message]` | —                                                                                 | Write scope required. Confirm before sending. `<profile>` is `@handle`, a profile URL, `profile_id:<id>`, or a profile URN.        |
+| `requests sent`                 | `--limit`, `--cursor`, `--offset`, `--no-cache`                                      | Cacheable read of pending sent requests. Returns request `id`; cache hits are free.                                                |
+| `requests received`             | `--limit`, `--cursor`, `--offset`, `--no-cache`                                      | Cacheable read of pending received requests. Returns request `id`; cache hits are free.                                            |
+| `requests accept request_id:<id>` | —                                                                                  | Write scope required. Confirm before accepting a received request. Use `id` from `requests received`.                              |
+| `requests cancel request_id:<id>` | —                                                                                  | Write scope required. Confirm before canceling a sent request or refusing a received request. Use `id` from `requests sent` or `requests received`. |
 
 ## Posts, comments, and reactions
 
@@ -79,13 +83,19 @@ social linkedin messages "$CHAT_ID" --limit 50
 social linkedin messages mark "$CHAT_ID" read
 social linkedin message "$CHAT_ID" "Thanks — I will follow up today."
 
-# Post, comment, react, and connect only after approval.
+# Post, comment, react, and send connection requests only after approval.
 POST="<post-id-or-URL>"
-PROFILE="<profile-id-or-URL>"
+PROFILE="profile_id:<profile-id>"
 social linkedin post "Shipping the new UseSocial CLI surface."
 social linkedin comment "$POST" "Thoughtful breakdown — thanks for sharing."
 social linkedin react "$POST" like
-social linkedin connect "$PROFILE" "I liked your recent work on AI infrastructure."
+social linkedin requests send "$PROFILE" "I liked your recent work on AI infrastructure."
+
+# Review and manage connection requests; accept/cancel only after approval.
+social linkedin requests sent --limit 25
+social linkedin requests received --limit 25
+social linkedin requests accept request_id:<request-id>
+social linkedin requests cancel request_id:<request-id>
 
 # Find founders.
 social linkedin search people "founder ai" > /tmp/founders.json

@@ -2,7 +2,7 @@
 
 Full command catalog, field/expansion presets, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is X-specific.
 
-`social x <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and own-account commands infer the selected X account. Use `--account <handle-or-id>` to pick a different connected X account. Target-user reads take an X user ID, handle, URL, or `me` for the selected account.
+`social x <command>`. X list endpoints use `--limit`, pagination uses `--cursor`, and own-account commands infer the selected X account. Use `--account <@handle|profile_id:id>` to pick a different connected X account. Target-user reads take an X user ID, handle, URL, or `me` for the selected account.
 
 X commands return the standard `social` envelope: `{ "account": {...}, "data": [...] }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, cursor }`. Rows include provider fields plus synthesized `id` and `url`. Use `.meta.cursor` for pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/handle resolution.
 

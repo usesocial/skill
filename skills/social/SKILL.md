@@ -48,7 +48,7 @@ Shared across both platforms:
 - Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
 - Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, and pagination from `.meta.cursor`.
 - LinkedIn v2 upstream lists use `data[]` plus `next_cursor`; the CLI wrapper projects supported list commands into `.items[]` and `.meta.cursor`.
-- `--account <handle-or-id>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
+- `--account <@handle|profile_id:id>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
 - `--no-cache` — available only on cacheable read commands. Bypasses cached reads and refreshes the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 
@@ -63,7 +63,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 | List shape    | `{ account, items, meta }`                          | `{ account, data | items, meta }`                                                 |
 | Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept IDs, URLs, handles, or `me` |
 
-For X, use `--account <handle-or-id>` to choose among connected accounts. Use `me` when a target-user read should use the selected account.
+For X, use `--account <@handle|profile_id:id>` to choose among connected accounts. Use `me` when a target-user read should use the selected account.
 
 ## Choosing a command
 

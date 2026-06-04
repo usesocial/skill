@@ -63,12 +63,12 @@ To swap accounts:
 
 ```bash
 social account
-social account disconnect linkedin <username-or-public-id>
-social account reconnect linkedin <username-or-public-id>
+social account disconnect linkedin <@handle|profile_id:id>
+social account reconnect linkedin <@handle|profile_id:id>
 
 social account
-social account disconnect x <handle-or-id>
-social account reconnect x <handle-or-id>
+social account disconnect x <@handle|profile_id:id>
+social account reconnect x <@handle|profile_id:id>
 ```
 
 ## Scopes
@@ -89,7 +89,7 @@ Choose Read + Write in the login prompt.
 
 ## Per-call account selection
 
-Every command accepts `--account <handle-or-id>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against bare `social account`.
+Every command accepts `--account <@handle|profile_id:id>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against bare `social account`.
 
 ## Caching
 
