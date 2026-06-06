@@ -58,7 +58,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 
 |               | LinkedIn (`social linkedin …`)                      | X (`social x …`)                                                                  |
 | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Page size     | `--limit` (1–100; 1–1000 for `connections`)         | `--limit` (1–100; 5–100 for `tweets`; 10–100 for `search`)                       |
+| Page size     | `--limit` (1–100; 1–1000 for `connections`)         | `--limit` (1–100; 5–100 for `tweets`)                                            |
 | Pagination    | `--cursor` ← `.meta.cursor`                         | `--cursor` ← `.meta.cursor`                                                       |
 | List shape    | `{ account, items, meta }`                          | `{ account, data | items, meta }`                                                 |
 | Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept `@handle`, `profile_id:<id>`, profile URLs, or `me` |
@@ -72,7 +72,7 @@ For X, use `--account <@handle|profile_id:<id>>` to choose among connected accou
 3. Identify the **action**: fetch one, list many, search, drill into a sub-resource.
 4. Construct `social <platform> <command>` and add flags. Verify with `social schema "<command path>"` or `--help` if uncertain.
 
-For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x search"]`. For one command, inspect it directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
+For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x bookmarks"]`. For one command, inspect it directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
 
 When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, extract the trailing numeric ID.
 
