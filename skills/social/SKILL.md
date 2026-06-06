@@ -1,7 +1,7 @@
 ---
 name: social
-description: Use when the user wants agent-run distribution across LinkedIn or X (Twitter): outreach, posting, audience insights, message triage, account research, comments/reactions, companies, jobs, bookmarks, connected-account management, and billing audits. Triggers include "search LinkedIn", "find <name> on LinkedIn", "look up this tweet", "my X bookmarks", "show my home timeline", "check my messages", "from:<handle>", and explicit `/social`. Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs directly.
-argument-hint: [task — e.g. "search LinkedIn for AI founders", "list my X bookmarks", "read my DMs"]
+description: "Use when the user wants agent-run distribution across LinkedIn or X (Twitter): outreach, posting, audience insights, message triage, account research, comments/reactions, companies, jobs, bookmarks, connected-account management, and billing audits. Triggers include \"search LinkedIn\", \"find <name> on LinkedIn\", \"look up this tweet\", \"my X bookmarks\", \"show my home timeline\", \"check my messages\", \"from:<handle>\", and explicit `/social`. Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs directly."
+argument-hint: "task — e.g. \"search LinkedIn for AI founders\", \"list my X bookmarks\", \"read my DMs\""
 ---
 
 # social
@@ -48,7 +48,7 @@ Shared across both platforms:
 - Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
 - Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, and pagination from `.meta.cursor`.
 - LinkedIn v2 upstream lists use `data[]` plus `next_cursor`; the CLI wrapper projects supported list commands into `.items[]` and `.meta.cursor`.
-- `--account <@handle|profile_id:id>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
+- `--account <@handle|profile_id:<id>>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
 - `--no-cache` — available only on cacheable read commands. Bypasses cached reads and refreshes the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 
@@ -61,9 +61,9 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 | Page size     | `--limit` (1–100; 1–1000 for `connections`)         | `--limit` (1–100; 5–100 for `tweets`; 10–100 for `search`)                       |
 | Pagination    | `--cursor` ← `.meta.cursor`                         | `--cursor` ← `.meta.cursor`                                                       |
 | List shape    | `{ account, items, meta }`                          | `{ account, data | items, meta }`                                                 |
-| Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept IDs, URLs, handles, or `me` |
+| Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept `@handle`, `profile_id:<id>`, profile URLs, or `me` |
 
-For X, use `--account <@handle|profile_id:id>` to choose among connected accounts. Use `me` when a target-user read should use the selected account.
+For X, use `--account <@handle|profile_id:<id>>` to choose among connected accounts. Use `me` when a target-user read should use the selected account.
 
 ## Choosing a command
 
