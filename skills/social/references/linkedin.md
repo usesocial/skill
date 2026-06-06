@@ -8,7 +8,7 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 | Command                                                  | Purpose                                                     |
 | -------------------------------------------------------- | ----------------------------------------------------------- |
-| `social account connect linkedin`            | Hosted-auth handshake (Unipile). Opens the web app on a TTY; prints the URL on non-TTY. |
+| `social account connect linkedin`            | Browser connection flow. Opens the web app on a TTY; prints the URL on non-TTY. |
 | `social account reconnect linkedin <account>` | Re-auth an existing account.                            |
 | `social account disconnect linkedin <account>`           | Disconnect an account.                                      |
 | `social account`                                         | Inspect signed-in user and connected accounts.              |
@@ -233,7 +233,7 @@ social account
 social linkedin profile
 ```
 
-From inside an agent/non-TTY session, the CLI prints the hosted-auth URL to stderr so the user can open it themselves.
+From inside an agent/non-TTY session, the CLI prints the connection URL to stderr so the user can open it themselves.
 
 ### 5. Billing & usage audit
 

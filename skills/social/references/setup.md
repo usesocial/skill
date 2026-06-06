@@ -53,11 +53,11 @@ Use bare `social account` to inspect auth state and connected accounts. It alway
 `account login` only authenticates the user against the social API. Each platform needs its own connection handshake:
 
 ```bash
-social account connect linkedin    # Unipile hosted auth
+social account connect linkedin    # LinkedIn browser connection
 social account connect x           # X OAuth handshake
 ```
 
-The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the handoff URL to stderr so the user can open it themselves. It polls for up to 5 minutes until the connection appears in bare `social account`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls for up to 5 minutes until the connection appears in bare `social account`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
 
 To swap accounts:
 
@@ -150,7 +150,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`.         |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed handle/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
-| `rate_limited`                                       | Upstream throttle hit (X, Unipile, or LinkedIn).  | Back off per the retry hint. X quotas are tight on free tiers.           |
+| `rate_limited`                                       | Upstream throttle hit.                            | Back off per the retry hint. X quotas are tight on free tiers.           |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
 | `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
