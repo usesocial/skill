@@ -86,7 +86,7 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 
 ## Output handling
 
-- Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin search people "query" > /tmp/people.json`. This also avoids re-billing the same query.
+- Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin connections --limit 100 > /tmp/connections.json`. This also avoids re-billing the same query.
 - Project only the fields you need with `jq` — full payloads are large and burn context fast.
 - For user-facing summaries, build a short markdown table from `jq` output rather than dumping raw JSON.
 - Surface errors verbatim — codes like `scope_missing`, `endpoint_not_available_in_v1`, `rate_limited`, `platform_not_connected` are precise. Full error catalog in `references/setup.md`.

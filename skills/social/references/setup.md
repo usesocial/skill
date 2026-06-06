@@ -57,7 +57,7 @@ social account connect linkedin    # LinkedIn browser connection
 social account connect x           # X OAuth handshake
 ```
 
-The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls for up to 5 minutes until the connection appears in bare `social account`, then prints the connected handle. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls until the connection appears in bare `social account`, then prints the connected handle. LinkedIn connect/reconnect times out after 2 minutes; X connect/reconnect times out after 5 minutes. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
 
 To swap accounts:
 
@@ -154,7 +154,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
 | `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
-| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within 5 minutes. | Re-run `social account connect <platform>`.                              |
+| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
 | `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the handle/id.                                                       |
 
 ## Troubleshooting

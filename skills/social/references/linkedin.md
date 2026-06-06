@@ -2,7 +2,7 @@
 
 Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `-H/--header`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
 
-`social linkedin <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination. Commands return the standard `social` envelope: `{ "account": {...}, "data": {...} }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, cursor }`. List rows are read from `.items[]` after CLI wrapping; the upstream v2 list envelope is `data[]` plus `next_cursor`. Rows include upstream fields plus synthesized `id` and `url` where needed. Full user/profile rows use `id`, `display_name`, `public_picture_url`, `profile_url`, `description`, and `specifics.member_id` when present; search rows can still expose `headline`. Use `.meta.cursor` for pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/profile resolution. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
+`social linkedin <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination. Commands return the standard `social` envelope: `{ "account": {...}, "data": {...} }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, cursor }`. List rows are read from `.items[]` after CLI wrapping; the upstream v2 list envelope is `data[]` plus `next_cursor`. Rows include upstream fields plus synthesized `id` and `url` where needed. Full user/profile rows use `id`, `display_name`, `public_picture_url`, `profile_url`, `description`, and `specifics.member_id` when present. Use `.meta.cursor` for pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/profile resolution. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
 
 ## Account lifecycle
 
@@ -37,15 +37,6 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | `reactions <post>`          | `--limit 1-100`, `--cursor`, `--comment-id <id>`                                         | `--comment-id` switches to reactions on that comment.                                                                                                            |
 
 `<post>` is the LinkedIn numeric ID, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`, an activity URL, or the `social_id` returned in a post payload.
-
-## Search
-
-| Command                       | Args                                             | Notes               |
-| ----------------------------- | ------------------------------------------------ | ------------------- |
-| `search people <keywords>`    | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
-| `search posts <keywords>`     | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
-| `search jobs <keywords>`      | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
-| `search companies <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
 
 ## Companies
 
@@ -97,20 +88,16 @@ social linkedin requests received --limit 25
 social linkedin requests accept request_id:<request-id>
 social linkedin requests cancel request_id:<request-id>
 
-# Find founders.
-social linkedin search people "founder ai" > /tmp/founders.json
-jq -r '.items[] | [.display_name, .headline, .public_identifier, .profile_url] | @tsv' /tmp/founders.json
-
 # Drill into a post's reactions.
-social linkedin reactions post_id:7286419083240247296 --limit 100 \
+social linkedin reactions post_id:<post-id> --limit 100 \
   | jq '.items[].sender.public_identifier'
 
 # Walk a company's recent posts.
 social linkedin posts anthropic --is-company --limit 20
 
-# Capture once before filtering.
-social linkedin search people "AI safety" > /tmp/people.json
-jq -r '.items[] | [.display_name, .headline] | @tsv' /tmp/people.json
+# Capture connections once before filtering.
+social linkedin connections --limit 100 > /tmp/connections.json
+jq -r '.items[] | .user | [.display_name, .description] | @tsv' /tmp/connections.json
 ```
 
 ## jq recipes
@@ -118,8 +105,8 @@ jq -r '.items[] | [.display_name, .headline] | @tsv' /tmp/people.json
 Run against command JSON output:
 
 ```bash
-# Display name, search headline, profile URL from a search.
-jq -r '.items[] | [.display_name, .headline, (.profile_url // .url)] | @tsv'
+# Display name, description, and profile URL from profile-style rows.
+jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
 
 # Connections as CSV.
 jq -r '.items[] | .user as $user | [$user.display_name, $user.description, $user.public_identifier, $user.profile_url, ($user.specifics.member_id // $user.id)] | @csv' > connections.csv
@@ -134,32 +121,33 @@ jq '{cost: .meta.cost, cursor: .meta.cursor, resolved: .meta.resolved}'
 When chaining over a saved file, write once to avoid re-billing:
 
 ```bash
-social linkedin search people "AI infra" > /tmp/people.json
-jq '.items | length' /tmp/people.json
-jq -r '.items[].public_identifier' /tmp/people.json | sort -u
+social linkedin connections --limit 100 > /tmp/connections.json
+jq '.items | length' /tmp/connections.json
+jq -r '.items[].user.public_identifier' /tmp/connections.json | sort -u
 ```
 
 ## End-to-end recipes
 
 Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same query.
 
-### 1. Lead research
+### 1. Connection Review
 
-**Goal:** "Find AI safety founders in NYC and give me their headlines and profile URLs."
+**Goal:** "Review my LinkedIn connections and pull the most relevant profile links."
 
 ```bash
-# 1. Search — capture once.
-social linkedin search people "AI safety founder New York" > /tmp/leads.json
+# 1. Capture once.
+social linkedin connections --limit 100 > /tmp/connections.json
 
 # 2. Project the fields we care about.
 jq -r '
   .items[]
-  | [ .display_name, .headline, .location, (.profile_url // .url) ]
+  | .user
+  | [ .display_name, .description, (.profile_url // .url) ]
   | @tsv
-' /tmp/leads.json | column -t -s $'\t'
+' /tmp/connections.json | column -t -s $'\t'
 
 # 3. (Optional) Drill into the top three — full profiles, including experience.
-jq -r '.items[0:3][].public_identifier' /tmp/leads.json | while read -r ID; do
+jq -r '.items[0:3][].user.public_identifier' /tmp/connections.json | while read -r ID; do
   social linkedin profile "$ID" --with-sections experience,education \
     > "/tmp/profile-$ID.json"
 done
