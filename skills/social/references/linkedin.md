@@ -1,6 +1,6 @@
 # LinkedIn — `social linkedin`
 
-Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `--no-cache`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
+Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `-H/--header`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
 
 `social linkedin <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination. Commands return the standard `social` envelope: `{ "account": {...}, "data": {...} }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, cursor }`. List rows are read from `.items[]` after CLI wrapping; the upstream v2 list envelope is `data[]` plus `next_cursor`. Rows include upstream fields plus synthesized `id` and `url` where needed. Full user/profile rows use `id`, `display_name`, `public_picture_url`, `profile_url`, `description`, and `specifics.member_id` when present; search rows can still expose `headline`. Use `.meta.cursor` for pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/profile resolution. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
 
@@ -17,12 +17,12 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 | Command                         | Args                                                                                 | Notes                                                                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| `profile [target]`              | `--with-sections <csv>`, `--variant <name>`, `--account`, `--no-cache`               | Connected profile by default. Pass `@public-identifier`, `profile_id:<id>`, a profile URL, or a profile URN. |
-| `connections [target]`          | `--limit 1-1000`, `--cursor`, `--offset`, `--filter <name>`, `--no-cache`            | Omitting the positional lists the selected account's connections. Higher limit than the standard 100.                              |
-| `posts [target]`                | `--limit`, `--cursor`, `--offset`, `--no-cache`                                      | Pass a profile/company target or omit it for the selected account.                                                                |
+| `profile [target]`              | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header`              | Connected profile by default. Pass `@public-identifier`, `profile_id:<id>`, a profile URL, or a profile URN. |
+| `connections [target]`          | `--limit 1-1000`, `--cursor`, `--offset`, `--filter <name>`, `-H/--header`           | Omitting the positional lists the selected account's connections. Higher limit than the standard 100.                              |
+| `posts [target]`                | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Pass a profile/company target or omit it for the selected account.                                                                |
 | `requests send <profile> [message]` | —                                                                                 | Write scope required. Confirm before sending. `<profile>` is `@handle`, a profile URL, `profile_id:<id>`, or a profile URN.        |
-| `requests sent`                 | `--limit`, `--cursor`, `--offset`, `--no-cache`                                      | Cacheable read of pending sent requests. Returns request `id`; cache hits are free.                                                |
-| `requests received`             | `--limit`, `--cursor`, `--offset`, `--no-cache`                                      | Cacheable read of pending received requests. Returns request `id`; cache hits are free.                                            |
+| `requests sent`                 | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Cacheable read of pending sent requests. Returns request `id`; cache hits are free.                                                |
+| `requests received`             | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Cacheable read of pending received requests. Returns request `id`; cache hits are free.                                            |
 | `requests accept request_id:<id>` | —                                                                                  | Write scope required. Confirm before accepting a received request. Use `id` from `requests received`.                              |
 | `requests cancel request_id:<id>` | —                                                                                  | Write scope required. Confirm before canceling a sent request or refusing a received request. Use `id` from `requests sent` or `requests received`. |
 
@@ -42,24 +42,24 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 
 | Command                       | Args                                             | Notes               |
 | ----------------------------- | ------------------------------------------------ | ------------------- |
-| `search people <keywords>`    | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
-| `search posts <keywords>`     | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
-| `search jobs <keywords>`      | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
-| `search companies <keywords>` | `--limit 1-100`, `--cursor`, `--account`, `--no-cache` | Quote the keywords. |
+| `search people <keywords>`    | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
+| `search posts <keywords>`     | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
+| `search jobs <keywords>`      | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
+| `search companies <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Quote the keywords. |
 
 ## Companies
 
 | Command                  | Args                                          | Notes                                                                 |
 | ------------------------ | --------------------------------------------- | --------------------------------------------------------------------- |
-| `company <company>`      | `--no-cache`                                  | `<company>` is `company_id:<id>`, a LinkedIn company URL, or an organization URN. |
-| `jobs <company>`         | `--limit 1-100`, `--offset`, `--no-cache`     | Lists job postings for a company target.                              |
+| `company <company>`      | `-H/--header`                                 | `<company>` is `company_id:<id>`, a LinkedIn company URL, or an organization URN. |
+| `jobs <company>`         | `--limit 1-100`, `--offset`, `-H/--header`    | Lists job postings for a company target.                              |
 
 ## Messages
 
 | Command                                               | Args                                                       | Notes                                      |
 | ----------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------ |
-| `messages`                                            | `--limit 1-20`, `--cursor`, `--after`, `--before`, `--no-cache` | List LinkedIn conversations.          |
-| `messages <target>`                                   | `--limit 1-250`, `--cursor`, `--after`, `--before`, `--no-cache` | List messages inside one existing chat. Target can be `chat_id:<id>`, `@handle`, `profile_id:<id>`, a profile URL, or a messaging-thread URL. |
+| `messages`                                            | `--limit 1-20`, `--cursor`, `--after`, `--before`, `-H/--header` | List LinkedIn conversations.          |
+| `messages <target>`                                   | `--limit 1-250`, `--cursor`, `--after`, `--before`, `-H/--header` | List messages inside one existing chat. Target can be `chat_id:<id>`, `@handle`, `profile_id:<id>`, a profile URL, or a messaging-thread URL. |
 | `message <target> <text>`                             | `--body '{...}'` for advanced payloads                     | Write scope required. Confirm with user.   |
 | `messages <target> mark read\|unread`                 | —                                                          | Write scope required; safe to retry.       |
 

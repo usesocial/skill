@@ -24,7 +24,7 @@ social account | schema | x | linkedin
 
 - **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
 - **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all runnable commands.
-- **`social x …`** — profiles, tweets, timeline, bookmarks, messages, search, and user graphs. Load `references/x.md` for the full catalog and recipes.
+- **`social x …`** — profiles, tweets, timeline, bookmarks, messages, and user graphs. Load `references/x.md` for the full catalog and recipes.
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post/job/company search, messages. Load `references/linkedin.md` for the full catalog and recipes.
 
 If the user says "Twitter", route to X. If they ask for something a platform exposes but the catalog doesn't list, run `social <platform> --help` or `social schema` — do not invent endpoints.
@@ -57,7 +57,7 @@ Shared across both platforms:
 - Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, and pagination from `.meta.cursor`.
 - LinkedIn v2 upstream lists use `data[]` plus `next_cursor`; the CLI wrapper projects supported list commands into `.items[]` and `.meta.cursor`.
 - `--account <@handle|profile_id:<id>>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
-- `--no-cache` — available only on cacheable read commands. Bypasses cached reads and refreshes the stored response after a successful upstream call. Avoid unless verifying freshly-published content; cache hits are free, fresh upstream calls are metered.
+- `-H, --header <Name: value>` — available on cacheable read commands. Adds proxy request headers; use `Cache-Control: no-cache` only when verifying freshly-published content. Cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 
 Default caching: allowlisted GET reads use a 15 minute TTL. Change the local default with `social account config cache ttl {total_in_seconds}`; `social account config cache mode live|analytical|historical` provides presets. Details live in `references/setup.md`.
@@ -113,7 +113,7 @@ social account login
 
 Choose Read + Write in the login prompt.
 
-Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `--no-cache` only when the schema shows the command is cacheable and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
+Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
 
 ## Safety rules
 
@@ -130,6 +130,6 @@ Loaded only when needed:
 
 - **`references/setup.md`** — install, `social account login`, `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
 - **`references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, jq recipes, and end-to-end playbooks (lead research, post engagement, paginated scrapes).
-- **`references/x.md`** — full X command catalog, field/expansion presets, output shapes, jq recipes, and end-to-end playbooks (content audit, bookmarks → markdown, search analysis, thread reconstruction).
+- **`references/x.md`** — full X command catalog, field/expansion presets, output shapes, jq recipes, and end-to-end playbooks (content audit, bookmarks → markdown, timeline analysis, thread reconstruction).
 
 When uncertain about a flag or subtree, the authoritative source is `social schema --leaves`, `social schema "<command path>"`, and `social <platform> <subtree> --help`. All are cheap and always correct.
