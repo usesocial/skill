@@ -1,6 +1,14 @@
 ---
 name: social
-description: "Use when the user wants agent-run distribution across LinkedIn or X (Twitter): outreach, posting, audience insights, message triage, account research, comments/reactions, companies, jobs, bookmarks, connected-account management, and billing audits. Triggers include \"search LinkedIn\", \"find <name> on LinkedIn\", \"look up this tweet\", \"my X bookmarks\", \"show my home timeline\", \"check my messages\", \"from:<handle>\", and explicit `/social`. Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs directly."
+description: |
+  Use when the user wants agent-run distribution across LinkedIn or X (Twitter):
+  outreach, posting, audience insights, message triage, account research,
+  comments/reactions, companies, jobs, bookmarks, connected-account management,
+  and billing audits. Triggers include "search LinkedIn", "find <name> on
+  LinkedIn", "look up this tweet", "my X bookmarks", "show my home timeline",
+  "check my messages", "from:<handle>", and explicit `/social`. Operates the
+  `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs
+  directly.
 argument-hint: "task — e.g. \"search LinkedIn for AI founders\", \"list my X bookmarks\", \"read my DMs\""
 ---
 
@@ -58,12 +66,12 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 
 |               | LinkedIn (`social linkedin …`)                      | X (`social x …`)                                                                  |
 | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Page size     | `--limit` (1–100; 1–1000 for `connections`)         | `--limit` (1–100; 5–100 for `tweets`)                                            |
+| Page size     | `--limit` (usually 1–100; 1–20 for conversation lists; 1–250 for one chat; 1–1000 for `connections`) | `--limit` (1–100; 5–100 for `tweets`)                                            |
 | Pagination    | `--cursor` ← `.meta.cursor`                         | `--cursor` ← `.meta.cursor`                                                       |
 | List shape    | `{ account, items, meta }`                          | `{ account, data | items, meta }`                                                 |
-| Positional ID | identifier passed inline; CLI resolves URLs/handles | own-account commands infer the selected account; target-user reads accept `@handle`, `profile_id:<id>`, profile URLs, or `me` |
+| Positional ID | use typed targets such as `profile_id:<id>`, `post_id:<id>`, `chat_id:<id>`, `company_id:<id>`, URLs, URNs, or handles where the schema says they are accepted | own-account commands infer the selected account when the optional target is omitted; target-user reads accept `@handle`, `profile_id:<id>`, or profile URLs |
 
-For X, use `--account <@handle|profile_id:<id>>` to choose among connected accounts. Use `me` when a target-user read should use the selected account.
+For X, use `--account <@handle|profile_id:<id>>` to choose among connected accounts. Omit an optional target when a target-user read should use the selected account.
 
 ## Choosing a command
 
@@ -74,7 +82,7 @@ For X, use `--account <@handle|profile_id:<id>>` to choose among connected accou
 
 For multi-call plans, start with `social schema --leaves` and select commands from the `.commands` map. Keys use the same words as the CLI command without `social`, e.g. `.commands["x bookmarks"]`. For one command, inspect it directly with `social schema "<command path>"`, so required args, flags, JSON body shape, output shape, pagination, auth, capability, confirmation, examples, and hazards stay explicit.
 
-When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, extract the trailing numeric ID.
+When the user gives a LinkedIn profile URL or handle, pass it through unchanged — the CLI resolves it. When they give a tweet URL like `https://x.com/handle/status/1843123456789012345`, pass the URL through or wrap the trailing numeric ID as `post_id:<id>`.
 
 ## Output handling
 
