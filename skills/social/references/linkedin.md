@@ -93,7 +93,7 @@ social linkedin reactions post_id:<post-id> --limit 100 \
   | jq '.items[].sender.public_identifier'
 
 # Walk a company's recent posts.
-social linkedin posts anthropic --is-company --limit 20
+social linkedin posts company_id:<company-id> --limit 20
 
 # Capture connections once before filtering.
 social linkedin connections --limit 100 > /tmp/connections.json
@@ -112,7 +112,7 @@ jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
 jq -r '.items[] | .user as $user | [$user.display_name, $user.description, $user.public_identifier, $user.profile_url, ($user.specifics.member_id // $user.id)] | @csv' > connections.csv
 
 # Drop verbose fields for an LLM-friendly summary.
-jq '.items[] | {id, url: (.profile_url // .url), display_name, headline, location}'
+jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
 
 # Inspect billing and paging metadata.
 jq '{cost: .meta.cost, cursor: .meta.cursor, resolved: .meta.resolved}'
