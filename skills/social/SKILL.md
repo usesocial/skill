@@ -42,7 +42,7 @@ Interpret the output:
 
 - **Exit 0 with a wrapped JSON profile** → installed, signed in, connected. Proceed.
 - **`command not found: social`** → ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal. Re-probe after they finish.
-- **`unauthenticated`, `401`, `Not signed in`** → ask the user to run `social account login` in an interactive terminal. The device flow prints the verification URL/code, tries to open `${SOCIAL_WEB_URL}/device`, and cannot complete headlessly.
+- **`unauthenticated`, `401`, `Not signed in`** → ask the user to run `social account login` in an interactive terminal. The device flow asks for email, sends a magic link, waits for browser approval, and cannot complete headlessly.
 - **`platform_not_connected`** -> run `social account connect linkedin` or `social account connect x`. In an agent/non-TTY run, the CLI prints the connection URL to stderr; the user approves the handshake in their browser.
 
 Do **not** background `social account login` or `social account connect <platform>` — both wait on a foreground poll loop.

@@ -42,7 +42,7 @@ social --help
 
 ## `social account login`
 
-`account login` runs the better-auth **device-authorization** flow. It is fully interactive: choose Read or Read + Write, enter email, approve the browser request, and confirm billing checkout if a seat is needed. The CLI prints a verification URL and a user code, tries to open `${SOCIAL_WEB_URL}/device`, and polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
+`account login` runs the better-auth **device-authorization** flow. It is fully interactive: choose Read or Read + Write, enter email, click the emailed magic link, approve the browser request, and confirm billing checkout if a seat is needed. The CLI sends the magic link with the device approval screen attached, then polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social account logout` clears both.
 
