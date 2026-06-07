@@ -1,6 +1,6 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` for agent-run distribution across LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — and how to handle setup, scopes, and output formats.
 
 ## What ships
 

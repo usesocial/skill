@@ -1,7 +1,7 @@
 ---
 name: social
 description: |
-  Use when the user wants agent-run distribution across LinkedIn or X (Twitter):
+  Use when the user wants to interact with LinkedIn or X (Twitter):
   outreach, posting, audience insights, message triage, account research,
   comments/reactions, companies, jobs, bookmarks, connected-account management,
   and billing audits. Triggers include "search LinkedIn", "find <name> on
@@ -9,7 +9,7 @@ description: |
   "check my messages", "from:<handle>", and explicit `/social`. Operates the
   `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs
   directly.
-argument-hint: "task — e.g. \"search LinkedIn for AI founders\", \"list my X bookmarks\", \"read my DMs\""
+argument-hint: 'task — e.g. "go through my linkedin inbox", "list my X bookmarks", "read my DMs"'
 ---
 
 # social
@@ -64,11 +64,11 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 
 **The two platforms diverge — don't mix their flags:**
 
-|               | LinkedIn (`social linkedin …`)                      | X (`social x …`)                                                                  |
-| ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Page size     | `--limit` (usually 1–100; 1–20 for conversation lists; 1–250 for one chat; 1–1000 for `connections`) | `--limit` (1–100; 5–100 for `tweets`)                                            |
-| Pagination    | `--cursor` ← `.meta.cursor`                         | `--cursor` ← `.meta.cursor`                                                       |
-| List shape    | `{ account, items, meta }`                          | `{ account, data | items, meta }`                                                 |
+|               | LinkedIn (`social linkedin …`)                                                                                                                                 | X (`social x …`)                                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page size     | `--limit` (usually 1–100; 1–20 for conversation lists; 1–250 for one chat; 1–1000 for `connections`)                                                           | `--limit` (1–100; 5–100 for `tweets`)                                                                                                                       |
+| Pagination    | `--cursor` ← `.meta.cursor`                                                                                                                                    | `--cursor` ← `.meta.cursor`                                                                                                                                 |
+| List shape    | `{ account, items, meta }`                                                                                                                                     | `{ account, data \| items, meta }`                                                                                                                          |
 | Positional ID | use typed targets such as `profile_id:<id>`, `post_id:<id>`, `chat_id:<id>`, `company_id:<id>`, URLs, URNs, or handles where the schema says they are accepted | own-account commands infer the selected account when the optional target is omitted; target-user reads accept `@handle`, `profile_id:<id>`, or profile URLs |
 
 For X, use `--account <@handle|profile_id:<id>>` to choose among connected accounts. Omit an optional target when a target-user read should use the selected account.
@@ -93,14 +93,14 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 
 Exit codes are stable:
 
-| Code | Meaning | What to do |
-| ---- | ------- | ---------- |
-| `0` | Success | Continue. |
-| `2` | Usage or validation error | Fix args, flags, IDs, JSON body, or local input. |
-| `3` | Not found | Check the ID or select a different resource. |
-| `4` | Auth or scope error | Run `social account login`, or log out and choose the needed scope. |
-| `5` | API or unexpected error | Retry later or surface the server error. |
-| `7` | Rate limited | Back off; JSON errors may include `retryAfterSeconds`. |
+| Code | Meaning                   | What to do                                                          |
+| ---- | ------------------------- | ------------------------------------------------------------------- |
+| `0`  | Success                   | Continue.                                                           |
+| `2`  | Usage or validation error | Fix args, flags, IDs, JSON body, or local input.                    |
+| `3`  | Not found                 | Check the ID or select a different resource.                        |
+| `4`  | Auth or scope error       | Run `social account login`, or log out and choose the needed scope. |
+| `5`  | API or unexpected error   | Retry later or surface the server error.                            |
+| `7`  | Rate limited              | Back off; JSON errors may include `retryAfterSeconds`.              |
 
 ## Scopes and billing
 

@@ -1,7 +1,7 @@
 {
   "name": "social",
   "version": "0.1.0",
-  "description": "Agent-run distribution from inside Claude Code: use the social CLI to run outreach, posting, audience insights, inbox/DM triage, and account research across LinkedIn and X.",
+  "description": "Agent-driven social media from inside Claude Code: use the social CLI to run outreach, posting, audience insights, inbox/DM triage, and account research across LinkedIn and X.",
   "author": {
     "name": "Cyrus Nouroozi",
     "email": "knouroozi@gmail.com"
