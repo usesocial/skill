@@ -11,7 +11,7 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | `social account connect linkedin`            | Browser connection flow. Opens the web app on a TTY; prints the URL on non-TTY. |
 | `social account reconnect linkedin <account>` | Re-auth an existing account.                            |
 | `social account disconnect linkedin <account>`           | Disconnect an account.                                      |
-| `social account`                                         | Inspect signed-in user and connected accounts.              |
+| `social account`                                         | Inspect authenticated user and connected accounts.              |
 
 ## Profiles, connections, and requests
 

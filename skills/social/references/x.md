@@ -13,7 +13,7 @@ X commands return the standard `social` envelope: `{ "account": {...}, "data": [
 | `social account connect x`          | OAuth handshake. Opens the web app on a TTY; prints the URL on non-TTY. |
 | `social account reconnect x <account>` | Re-auth after token revoke.                  |
 | `social account disconnect x <account>`         | Disconnect an account.                          |
-| `social account`                                | Inspect signed-in user and connected accounts.  |
+| `social account`                                | Inspect authenticated user and connected accounts.  |
 
 ## Profiles and user graphs
 
