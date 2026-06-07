@@ -101,6 +101,7 @@ social x following profile_id:<profile-id> --limit 100
 social x tweet post_id:<post-id>
 
 # Post text; use --body only for advanced media/reply payloads.
+# Body text may contain newlines; omit it to pipe via stdin (`social x post < file.txt`, `pbpaste | social x post`).
 social x post "Shipping the new UseSocial CLI surface."
 
 # Send a message only after approval.

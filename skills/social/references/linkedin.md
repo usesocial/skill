@@ -75,6 +75,7 @@ social linkedin messages "$CHAT" mark read
 social linkedin message "$CHAT" "Thanks — I will follow up today."
 
 # Post, comment, react, and send connection requests only after approval.
+# Body text may contain newlines; omit it to pipe via stdin (`social linkedin post < file.txt`, `pbpaste | social linkedin post`).
 POST="post_id:<post-id>"
 PROFILE="profile_id:<profile-id>"
 social linkedin post "Shipping the new UseSocial CLI surface."
