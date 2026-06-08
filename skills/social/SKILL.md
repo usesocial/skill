@@ -73,7 +73,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 
 For X, use `--account <@handle|profile_id:<id>>` to choose among connected accounts. Omit an optional target when a target-user read should use the selected account.
 
-**Body text is pipe-only.** Freeform content for posts, comments, messages, message edits, and connection-request notes has **no positional argument** — pipe it via stdin: `echo "..." | social x post`, `social linkedin post < file.txt`, `pbpaste | social linkedin message <target>`. Targets and typed IDs still go on argv. A single trailing newline is trimmed; internal newlines/tabs are preserved. Pass `--body '<json>'` for the structured escape hatch (its fields merge with the stdin text). If a command needs body text and stdin is an interactive TTY with no `--body`, it fails fast with a pipe hint instead of blocking. Schema marks these commands with `inputSource: "stdin"`.
+**Body text is pipe-only.** Freeform content for posts, comments, messages, message edits, and connection-request notes has **no positional argument** — pipe it via stdin: `echo "..." | social x post`, `social linkedin post < file.txt`, `pbpaste | social linkedin message <target>`. Targets and typed IDs still go on argv. A single trailing newline is trimmed; internal newlines/tabs are preserved. For structured payloads, pipe a JSON object via stdin; valid non-object JSON is rejected. If a command needs body text and stdin is an interactive TTY, it fails fast with a pipe hint instead of blocking. Schema marks these commands with `inputSource: "stdin"`.
 
 ## Choosing a command
 
