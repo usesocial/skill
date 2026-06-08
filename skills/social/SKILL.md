@@ -57,10 +57,10 @@ Shared across both platforms:
 - Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor?, totalCount? } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, cursor pagination from `.meta.cursor`, and offset-list totals from `.meta.totalCount` when the provider reports one.
 - LinkedIn list reads are offset-based except `messages`, which remains cursor-based. Raw LinkedIn envelopes expose `data[]` plus either `total_count` for offset reads or `next_cursor` for cursor reads; the CLI wrapper projects supported list commands into `.items[]` and the matching `meta` field.
 - `--account <@handle|profile_id:<id>>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
-- `-H, --header <Name: value>` — available on cacheable read commands. Adds proxy request headers; use `Cache-Control: no-cache` only when verifying freshly-published content. Cache hits are free, fresh upstream calls are metered.
+- `-H, --header <Name: value>` — available on cacheable read commands. Adds proxy request headers for cache control; use `Cache-Control: no-cache` to bypass a cached read and refresh the stored response, `Cache-Control: no-store` to bypass cache read/write, or `Cache-Control: max-age=<seconds>` to override TTL for one request. Cache hits are free, fresh upstream calls are metered. Cached responses may preserve validators such as `ETag` and `Last-Modified`, but do not rely on conditional revalidation semantics.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
 
-Default caching: allowlisted GET reads use a 15 minute TTL. Change the local default with `social account config cache ttl {total_in_seconds}`; `social account config cache mode live|analytical|historical` provides presets. Details live in `references/setup.md`.
+Default caching: allowlisted GET reads use a 15 minute TTL. Change the local default with `social account config cache ttl {total_in_seconds}`; `social account config cache mode live|analytical|historical` provides presets. Use `-H` only on commands whose schema/help lists `header`. Details live in `references/setup.md`.
 
 **The two platforms diverge — don't mix their flags:**
 
@@ -115,7 +115,7 @@ social account login
 
 Choose Read + Write in the login prompt.
 
-Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
+Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Use `-H "Cache-Control: no-store"` only when the response must not be stored, and `-H "Cache-Control: max-age=<seconds>"` to narrow or extend one request's TTL. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
 
 ## Safety rules
 

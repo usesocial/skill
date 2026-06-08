@@ -111,9 +111,18 @@ social account config cache mode analytical   # 24 hours
 social account config cache mode historical   # 1 week
 ```
 
-Use command-level `-H "Cache-Control: no-cache"` only when freshness matters and
-command help lists `--header`. It skips the cached read and refreshes the stored
-response after a successful upstream call.
+Use command-level cache headers only when command help lists `--header`:
+
+```bash
+social linkedin profile @handle -H "Cache-Control: no-cache"   # bypass cache read, refresh cache
+social linkedin profile @handle -H "Cache-Control: no-store"   # bypass cache read and write
+social linkedin profile @handle -H "Cache-Control: max-age=60" # override TTL for this request
+```
+
+`Cache-Control` is the functional request cache surface. Cached responses may
+preserve validators such as `ETag` and `Last-Modified` when the upstream returns
+them, but the CLI does not expose conditional revalidation semantics; use
+`Cache-Control: no-cache` when you need a fresh upstream read.
 
 ## Environment variables
 
