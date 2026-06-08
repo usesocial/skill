@@ -2,7 +2,7 @@
 
 Full command catalog, parsing patterns, and end-to-end recipes. Shared conventions (JSON output, `--account`, cacheable-read `-H/--header`, scopes, error catalog, `social schema`) live in the SKILL and `setup.md` — this file is LinkedIn-specific.
 
-`social linkedin <command>`. LinkedIn uses `--limit` for page size and `--cursor` for pagination. Commands return the standard `social` envelope: `{ "account": {...}, "data": {...} }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, cursor }`. List rows are read from `.items[]` after CLI wrapping; the upstream v2 list envelope is `data[]` plus `next_cursor`. Rows include upstream fields plus synthesized `id` and `url` where needed. Full user/profile rows use `id`, `display_name`, `public_picture_url`, `profile_url`, `description`, and `specifics.member_id` when present. Use `.meta.cursor` for pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/profile resolution. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
+`social linkedin <command>`. LinkedIn list reads are offset-based except messages, which remain cursor-based. Commands return the standard `social` envelope: `{ "account": {...}, "data": {...} }` or `{ "account": {...}, "items": [...] }`, plus `meta: { resolved, cost, cache, totalCount }` for offset reads and `meta.cursor` for cursor reads. List rows are read from `.items[]` after CLI wrapping; raw list envelopes expose `data[]` plus `total_count` for offset reads or `next_cursor` for cursor reads. Rows include upstream fields plus synthesized `id` and `url` where needed. Full user/profile rows use `id`, `display_name`, `public_picture_url`, `profile_url`, `description`, and `specifics.member_id` when present. Use `.meta.totalCount` for total available offset results, `.meta.cursor` only for messages pagination, `.meta.cost` for spend, and `.meta.resolved` to see URL/profile resolution. There are **no native time-window flags**; filter after the fact in `jq` on `.created_at` or whichever date field the payload exposes.
 
 ## Account lifecycle
 
@@ -18,11 +18,11 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | Command                         | Args                                                                                 | Notes                                                                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | `profile [target]`              | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header`              | Connected profile by default. Pass `@public-identifier`, `profile_id:<id>`, a profile URL, or a profile URN. |
-| `connections [target]`          | `--limit 1-1000`, `--cursor`, `--offset`, `--filter <name>`, `-H/--header`           | Omitting the positional lists the selected account's connections. Higher limit than the standard 100.                              |
-| `posts [target]`                | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Pass a profile/company target or omit it for the selected account.                                                                |
+| `connections [target]`          | `--limit 1-1000`, `--offset`, `--filter <name>`, `-H/--header`                       | Omitting the positional lists the selected account's connections. Higher limit than the standard 100.                              |
+| `posts [target]`                | `--limit`, `--offset`, `-H/--header`                                                 | Pass a profile/company target or omit it for the selected account.                                                                |
 | `requests send <profile>` (optional note via stdin) | —                                                                     | Write scope required. Confirm before sending. `<profile>` is `@handle`, a profile URL, `profile_id:<id>`, or a profile URN. Note is optional: `echo "..." \| social linkedin requests send <profile>`, or omit stdin for no note. |
-| `requests sent`                 | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Cacheable read of pending sent requests. Returns request `id`; cache hits are free.                                                |
-| `requests received`             | `--limit`, `--cursor`, `--offset`, `-H/--header`                                     | Cacheable read of pending received requests. Returns request `id`; cache hits are free.                                            |
+| `requests sent`                 | `--limit`, `--offset`, `-H/--header`                                                 | Offset-based cacheable read of pending sent requests. Returns request `id`; cache hits are free.                                  |
+| `requests received`             | `--limit`, `--offset`, `-H/--header`                                                 | Offset-based cacheable read of pending received requests. Returns request `id`; cache hits are free.                              |
 | `requests accept request_id:<id>` | —                                                                                  | Write scope required. Confirm before accepting a received request. Use `id` from `requests received`.                              |
 | `requests cancel request_id:<id>` | —                                                                                  | Write scope required. Confirm before canceling a sent request or refusing a received request. Use `id` from `requests sent` or `requests received`. |
 
@@ -33,8 +33,8 @@ Full command catalog, parsing patterns, and end-to-end recipes. Shared conventio
 | `post` (text via stdin)     | `--body '{...}'` for advanced media/visibility payloads                                  | Write scope required. Body text is piped: `echo "..." \| social linkedin post`. Confirm first.                                                                  |
 | `comment <post>` (text via stdin) | `--body '{...}'` for advanced payloads                                            | Write scope required. Body text is piped: `echo "..." \| social linkedin comment <post>`. Confirm first.                                                        |
 | `react <post> [type]`       | —                                                                                        | Write scope required. `type` defaults to the provider's like reaction.                                                                                           |
-| `comments <post>`           | `--limit 1-100`, `--cursor`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--comment-id <id>` | `--comment-id` fetches replies to a specific comment.                                                                                                            |
-| `reactions <post>`          | `--limit 1-100`, `--cursor`, `--comment-id <id>`                                         | `--comment-id` switches to reactions on that comment.                                                                                                            |
+| `comments <post>`           | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--comment-id <id>` | `--comment-id` fetches replies to a specific comment.                                                                                                            |
+| `reactions <post>`          | `--limit 1-100`, `--offset`, `--comment-id <id>`                                       | `--comment-id` switches to reactions on that comment.                                                                                                            |
 
 `<post>` is the LinkedIn numeric ID, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`, an activity URL, or the `social_id` returned in a post payload.
 
@@ -85,20 +85,20 @@ social linkedin react "$POST" like
 echo "I liked your recent work on AI infrastructure." | social linkedin requests send "$PROFILE"
 
 # Review and manage connection requests; accept/cancel only after approval.
-social linkedin requests sent --limit 25
-social linkedin requests received --limit 25
+social linkedin requests sent --limit 25 --offset 0
+social linkedin requests received --limit 25 --offset 0
 social linkedin requests accept request_id:<request-id>
 social linkedin requests cancel request_id:<request-id>
 
 # Drill into a post's reactions.
-social linkedin reactions post_id:<post-id> --limit 100 \
+social linkedin reactions post_id:<post-id> --limit 100 --offset 0 \
   | jq '.items[].sender.public_identifier'
 
 # Walk a company's recent posts.
-social linkedin posts company_id:<company-id> --limit 20
+social linkedin posts company_id:<company-id> --limit 20 --offset 0
 
 # Capture connections once before filtering.
-social linkedin connections --limit 100 > /tmp/connections.json
+social linkedin connections --limit 100 --offset 0 > /tmp/connections.json
 jq -r '.items[] | .user | [.display_name, .description] | @tsv' /tmp/connections.json
 ```
 
@@ -117,13 +117,13 @@ jq -r '.items[] | .user as $user | [$user.display_name, $user.description, $user
 jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
 
 # Inspect billing and paging metadata.
-jq '{cost: .meta.cost, cursor: .meta.cursor, resolved: .meta.resolved}'
+jq '{cost: .meta.cost, totalCount: .meta.totalCount, cursor: .meta.cursor, resolved: .meta.resolved}'
 ```
 
 When chaining over a saved file, write once to avoid re-billing:
 
 ```bash
-social linkedin connections --limit 100 > /tmp/connections.json
+social linkedin connections --limit 100 --offset 0 > /tmp/connections.json
 jq '.items | length' /tmp/connections.json
 jq -r '.items[].user.public_identifier' /tmp/connections.json | sort -u
 ```
@@ -138,7 +138,7 @@ Save outputs to `/tmp` and re-read with `jq` rather than re-billing the same que
 
 ```bash
 # 1. Capture once.
-social linkedin connections --limit 100 > /tmp/connections.json
+social linkedin connections --limit 100 --offset 0 > /tmp/connections.json
 
 # 2. Project the fields we care about.
 jq -r '
@@ -168,13 +168,9 @@ POST="post_id:<post-id>"
 social linkedin comments "$POST" --limit 100 --sort-by MOST_RELEVANT \
   > /tmp/comments.json
 
-# Reactions (paginate until empty).
-social linkedin reactions "$POST" --limit 100 > /tmp/reactions-1.json
-CURSOR=$(jq -r '.meta.cursor // empty' /tmp/reactions-1.json)
-if [ -n "$CURSOR" ]; then
-  social linkedin reactions "$POST" --limit 100 --cursor "$CURSOR" \
-    > /tmp/reactions-2.json
-fi
+# Reactions (paginate by offset until a short page).
+social linkedin reactions "$POST" --limit 100 --offset 0 > /tmp/reactions-1.json
+social linkedin reactions "$POST" --limit 100 --offset 100 > /tmp/reactions-2.json
 
 # Slim down for an LLM-friendly digest.
 jq -r '.items[] | {id, text, author: .author.display_name, reactions: .reactions_counter}' /tmp/comments.json

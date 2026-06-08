@@ -54,8 +54,8 @@ Full install, scope, billing, and troubleshooting detail lives in `references/se
 Shared across both platforms:
 
 - Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
-- Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, and pagination from `.meta.cursor`.
-- LinkedIn v2 upstream lists use `data[]` plus `next_cursor`; the CLI wrapper projects supported list commands into `.items[]` and `.meta.cursor`.
+- Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor?, totalCount? } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, cursor pagination from `.meta.cursor`, and offset-list totals from `.meta.totalCount` when the provider reports one.
+- LinkedIn list reads are offset-based except `messages`, which remains cursor-based. Raw LinkedIn envelopes expose `data[]` plus either `total_count` for offset reads or `next_cursor` for cursor reads; the CLI wrapper projects supported list commands into `.items[]` and the matching `meta` field.
 - `--account <@handle|profile_id:<id>>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
 - `-H, --header <Name: value>` — available on cacheable read commands. Adds proxy request headers; use `Cache-Control: no-cache` only when verifying freshly-published content. Cache hits are free, fresh upstream calls are metered.
 - `--help` — authoritative per-command flag list. Run `social <platform> <subtree> --help` when unsure.
@@ -67,7 +67,7 @@ Default caching: allowlisted GET reads use a 15 minute TTL. Change the local def
 |               | LinkedIn (`social linkedin …`)                                                                                                                                 | X (`social x …`)                                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Page size     | `--limit` (usually 1–100; 1–20 for conversation lists; 1–250 for one chat; 1–1000 for `connections`)                                                           | `--limit` (1–100; 5–100 for `tweets`)                                                                                                                       |
-| Pagination    | `--cursor` ← `.meta.cursor`                                                                                                                                    | `--cursor` ← `.meta.cursor`                                                                                                                                 |
+| Pagination    | `--offset` for list reads; `--cursor` ← `.meta.cursor` for `messages`                                                                                          | `--cursor` ← `.meta.cursor`                                                                                                                                 |
 | List shape    | `{ account, items, meta }`                                                                                                                                     | `{ account, data \| items, meta }`                                                                                                                          |
 | Positional ID | use typed targets such as `profile_id:<id>`, `post_id:<id>`, `chat_id:<id>`, `company_id:<id>`, URLs, URNs, or handles where the schema says they are accepted | own-account commands infer the selected account when the optional target is omitted; target-user reads accept `@handle`, `profile_id:<id>`, or profile URLs |
 
@@ -88,7 +88,7 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 
 ## Output handling
 
-- Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin connections --limit 100 > /tmp/connections.json`. This also avoids re-billing the same query.
+- Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin connections --limit 100 --offset 0 > /tmp/connections.json`. This also avoids re-billing the same query.
 - Project only the fields you need with `jq` — full payloads are large and burn context fast.
 - For user-facing summaries, build a short markdown table from `jq` output rather than dumping raw JSON.
 - Surface errors verbatim — codes like `scope_missing`, `endpoint_not_available_in_v1`, `rate_limited`, `platform_not_connected` are precise. Full error catalog in `references/setup.md`.
