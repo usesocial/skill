@@ -4,11 +4,12 @@ description: |
   Use when the user wants to interact with LinkedIn or X (Twitter):
   outreach, posting, audience insights, message triage, account research,
   comments/reactions, companies, jobs, bookmarks, connected-account management,
-  and billing audits. Triggers include "search LinkedIn", "find <name> on
-  LinkedIn", "look up this tweet", "my X bookmarks", "show my home timeline",
-  "check my messages", "from:<handle>", and explicit `/social`. Operates the
-  `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP APIs
-  directly.
+  billing audits, bug reports, and feature requests. Triggers include "search
+  LinkedIn", "find <name> on LinkedIn", "look up this tweet", "my X bookmarks",
+  "show my home timeline", "check my messages", "from:<handle>", "report a
+  bug", "request a feature", "send feedback", and explicit `/social`. Operates
+  the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's or X's HTTP
+  APIs directly.
 argument-hint: 'task — e.g. "go through my linkedin inbox", "list my X bookmarks", "read my DMs"'
 ---
 
@@ -16,13 +17,14 @@ argument-hint: 'task — e.g. "go through my linkedin inbox", "list my X bookmar
 
 Run distribution across the user's LinkedIn and X accounts through the `social` CLI. The agent runs the calls; the user stays the decision-maker. Treat `social` as the **only** correct way to reach LinkedIn or X data here — never call their HTTP APIs directly.
 
-`social` wraps account management, schema inspection, and two platform subtrees:
+`social` wraps account management, feedback submission, schema inspection, and two platform subtrees:
 
 ```
-social account | schema | x | linkedin
+social account | feedback | schema | x | linkedin
 ```
 
 - **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
+- **`social feedback bug|feature`** — submit a bug report or feature request to the maintainers. Gather useful context first, then pipe the final report text via stdin.
 - **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all runnable commands.
 - **`social x …`** — profiles, tweets, timeline, bookmarks, messages, and user graphs. Load `references/x.md` for the full catalog and recipes.
 - **`social linkedin …`** — profiles, posts, comments, reactions, companies, jobs, people/post/job/company search, messages. Load `references/linkedin.md` for the full catalog and recipes.
@@ -75,9 +77,38 @@ For X, use `--account <@handle|profile_id:<id>>` to choose among connected accou
 
 **Body text is pipe-only.** Freeform content for posts, comments, messages, message edits, and connection-request notes has **no positional argument** — pipe it via stdin: `echo "..." | social x post`, `social linkedin post < file.txt`, `pbpaste | social linkedin message <target>`. Targets and typed IDs still go on argv. A single trailing newline is trimmed; internal newlines/tabs are preserved. For structured payloads, pipe a JSON object via stdin; valid non-object JSON is rejected. If a command needs body text and stdin is an interactive TTY, it fails fast with a pipe hint instead of blocking. Schema marks these commands with `inputSource: "stdin"`.
 
+Feedback text is also pipe-only:
+
+```bash
+echo "..." | social feedback bug
+echo "..." | social feedback feature
+```
+
+`social feedback` requires the user to be signed in, but it does not require a connected LinkedIn or X account. If auth state is unclear, run `social account` first.
+
+## Feedback mode
+
+Use feedback mode when the user wants to report a product bug, request a feature, or send actionable founder-facing feedback about the CLI or hosted service. Do not send a thin transcript. Interview briefly, assemble a clear report, show the draft when the user has not already approved sending, then pipe the final text to `social feedback bug` or `social feedback feature`.
+
+For **bug reports**, collect as much safe context as helps reproduce the issue:
+
+- What the user was trying to do, the exact command or workflow, expected behavior, and actual behavior.
+- Reproduction steps, whether it is consistent or intermittent, and when it last happened.
+- Relevant CLI version, OS/shell, install method, and safe command output such as `social --version`, `social account` status shape, `--help`, schema snippets, exit code, and redacted stderr.
+- Related environment names and configuration choices, but never secret values, bearer tokens, magic links, cookies, private messages, or unrelated personal data. Redact IDs or handles when they are not needed to reproduce.
+- Any workaround the user found and whether the issue blocks them.
+
+For **feature requests**, help the founder understand the job to be done:
+
+- Ask what the user is trying to accomplish, what triggered the need, and what outcome would make the request successful.
+- Capture the current workaround or status quo, where it breaks down, who else would use it, and how often it comes up.
+- Elicit concrete examples: commands they wish existed, inputs/outputs they expect, integrations, edge cases, and what should not happen.
+- Include constraints such as platform, account type, privacy expectations, speed, cost sensitivity, and whether read-only or write access is acceptable.
+- Keep the report in the user's language where useful, but organize it so a founder can see the need, urgency, and shape of a possible solution.
+
 ## Choosing a command
 
-1. Identify the **platform** (LinkedIn vs X — "Twitter" → X) and load that reference.
+1. Identify whether the task is **feedback**, **account/setup**, or a **platform** action. For feedback, use the feedback mode above. For platform work, identify LinkedIn vs X — "Twitter" → X — and load that reference.
 2. Identify the **noun**: profile/user, post/tweet, company, search, bookmark, timeline, message, comment, reaction.
 3. Identify the **action**: fetch one, list many, search, drill into a sub-resource.
 4. Construct `social <platform> <command>` and add flags. Verify with `social schema "<command path>"` or `--help` if uncertain.

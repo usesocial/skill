@@ -1,12 +1,12 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — and how to handle setup, scopes, and output formats.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — plus how to send useful bug reports and feature requests through `social feedback`.
 
 ## What ships
 
 One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my X bookmarks") and is also invokable as `/social`.
 
-- **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, billing, safety, and how to pick a platform reference.
+- **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, feedback mode, billing, safety, and how to pick a platform reference.
 - **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
 - **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
 - **`skills/social/references/x.md`** — full X command catalog, field/expansion presets, output shapes, `jq` recipes, and end-to-end playbooks.
@@ -23,6 +23,17 @@ echo "Thanks for the note." | social linkedin message @handle
 
 Targets, typed IDs, URLs, and handles still go on argv. Pipe a JSON object via
 stdin for advanced structured payloads.
+
+Feedback reports are stdin-only too:
+
+```sh
+echo "..." | social feedback bug
+echo "..." | social feedback feature
+```
+
+For bugs, agents should gather safe reproduction context before submitting. For
+features, agents should understand the user's job to be done, current workaround,
+intent, constraints, and examples so the report is useful founder feedback.
 
 ## Install
 
