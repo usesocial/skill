@@ -150,10 +150,11 @@ Errors arrive on stderr with a non-zero exit. JSON-only command surfaces print
 `retryAfterSeconds` when available. Surface messages verbatim — they are precise enough
 for the user to act on.
 
-Exit codes are typed: `2` means fix command usage or local validation, `3` means not found,
-`4` means login/scope/auth, `5` means API or unexpected failure, and `7` means rate
-limited. LinkedIn proxy requests retry automatically, honoring `Retry-After` first and
-then exponential fallback; for other `7` errors, JSON may include `retryAfterSeconds`.
+Exit codes are typed: `2` means fix command usage, flags, IDs, JSON body, or
+local input. Server-side API/proxy failures exit `5`. `3` means not found, `4`
+means login/scope/auth, and `7` means rate limited. LinkedIn proxy requests
+retry automatically, honoring `Retry-After` first and then exponential fallback;
+for other `7` errors, JSON may include `retryAfterSeconds`.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |

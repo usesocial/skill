@@ -4,7 +4,7 @@ An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesoci
 
 ## What ships
 
-One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my X bookmarks") and is also invokable as `/social`.
+One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my saved X posts") and is also invokable as `/social`.
 
 - **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, feedback mode, billing, safety, and how to pick a platform reference.
 - **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
