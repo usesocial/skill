@@ -241,6 +241,7 @@ From inside an agent/non-TTY session, the CLI prints the OAuth URL to stderr so 
 
 ```bash
 # Aggregate first.
+social account billing
 social account usage
 
 # Then the recent firehose for the last 30 days.

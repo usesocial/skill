@@ -48,6 +48,8 @@ After success, credentials live in the OS keyring (service `social-cli`) with a 
 
 Use bare `social account` to inspect auth state and connected accounts. It always prints compact JSON with `status`, credential namespace/path, verified session data when available, connected account rows, and seat counts when the session is online.
 
+Use `social account billing` for the current seat, subscription, and usage-billing snapshot. Use `social account billing portal` to open the hosted billing portal; it prints `{ "url": "...", "opened": true|false }`, so agents can hand the URL to the user when a browser cannot open.
+
 ## Connecting a platform account
 
 `account login` only authenticates the user against the social API. Each platform needs its own connection handshake:

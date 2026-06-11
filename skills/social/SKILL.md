@@ -23,7 +23,7 @@ Run distribution across the user's LinkedIn and X accounts through the `social` 
 social account | feedback | schema | x | linkedin
 ```
 
-- **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
+- **`social account …`** — login, logout, connect, reconnect, disconnect, inspect LinkedIn/X accounts, manage hosted billing with `billing`/`billing portal`, audit spend with `usage`/`logs`, and configure local CLI settings with `config`. Bare `social account` prints the current session plus connected accounts.
 - **`social feedback bug|feature`** — submit a bug report or feature request to the maintainers. Gather useful context first, then pipe the final report text via stdin.
 - **`social schema [command path]`** — authoritative machine-readable command tree. Use `social schema --leaves` for the agent manifest across all runnable commands.
 - **`social x …`** — profiles, tweets, timeline, bookmarks, messages, and user graphs. Load `references/x.md` for the full catalog and recipes.
@@ -146,7 +146,7 @@ social account login
 
 Choose Read + Write in the login prompt.
 
-Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Use `-H "Cache-Control: no-store"` only when the response must not be stored, and `-H "Cache-Control: max-age=<seconds>"` to narrow or extend one request's TTL. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Audit actual spend after a run with `social account usage` and `social account logs`.
+Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Use `-H "Cache-Control: no-store"` only when the response must not be stored, and `-H "Cache-Control: max-age=<seconds>"` to narrow or extend one request's TTL. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Inspect seats/subscription with `social account billing`, open hosted billing with `social account billing portal`, and audit actual spend after a run with `social account usage` and `social account logs`.
 
 ## Safety rules
 
