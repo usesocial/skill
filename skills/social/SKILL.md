@@ -51,6 +51,16 @@ Do **not** background `social account login` or `social account connect <platfor
 
 Full install, scope, billing, and troubleshooting detail lives in `references/setup.md`.
 
+## Synced reads (local cache)
+
+Several reads serve from a **local SQLite mirror** of the connected account instead of calling upstream live, returned enriched with the relevant person profiles. They are first-person (your own data); flags are just `--limit` and `--account` (LinkedIn `messages` also takes a `chat_id:<id>` / thread-URL target).
+
+- **Sync the collection.** `social <platform> sync <collection>` walks it into the cache. Bare `social <platform> sync` lists the collections with their last-synced time. A cheap sync auto-runs; a larger one prints a credit estimate and requires `--credits <N>` — one flag that is **both** the consent and the hard spend cap. `--since <ISO|N:days>` bounds time-series collections.
+- **All of these require a prior sync.** Running one on a never-synced collection exits with a usage error telling you to run `social <platform> sync <collection>` first.
+- **Staleness differs by collection.** `followers`, `following`, `connections` auto-refresh incrementally (cheap checkpoint resume) only when the cache is older than 15 minutes — run `sync` again to refresh sooner, or change the window with `social account config cache ttl <seconds>`. `x messages`, `linkedin messages`, and `linkedin requests sent|received` have **no staleness window**: once synced, every read refreshes first, so you always see the latest.
+- **Raw queries.** `social <platform> sql "<SELECT …>"` runs read-only SQL over the mirror and never refreshes; bare `social <platform> sql` prints the schema.
+- **Everything else is unchanged.** All other reads (`profile`, `tweets`, `bookmarks`, `search`, `posts`, …) still hit upstream live and need no sync.
+
 ## Invocation conventions
 
 Shared across both platforms:
