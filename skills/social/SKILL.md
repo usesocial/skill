@@ -56,7 +56,7 @@ Full install, scope, billing, and troubleshooting detail lives in `references/se
 Shared across both platforms:
 
 - Output is compact JSON by default. Pipe through `jq` whenever output feeds analysis, filtering, summarising, or saving.
-- Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, cursor?, totalCount? } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, cursor pagination from `.meta.cursor`, and offset-list totals from `.meta.totalCount` when the provider reports one.
+- Output is wrapped as `{ account, data | items, meta: { resolved, cost, cache, usage?, cursor?, totalCount? } }`. Read rows from `.items[]` or `.data[]`, cost from `.meta.cost`, current usage from `.meta.usage`, cursor pagination from `.meta.cursor`, and offset-list totals from `.meta.totalCount` when the provider reports one.
 - LinkedIn list reads are offset-based except `messages`, which remains cursor-based. Raw LinkedIn envelopes expose `data[]` plus either `total_count` for offset reads or `next_cursor` for cursor reads; the CLI wrapper projects supported list commands into `.items[]` and the matching `meta` field.
 - `--account <@handle|profile_id:<id>>` — disambiguate when multiple accounts of that platform are connected. Resolves against bare `social account`.
 - `-H, --header <Name: value>` — available on cacheable read commands. Adds proxy request headers for cache control; use `Cache-Control: no-cache` to bypass a cached read and refresh the stored response, `Cache-Control: no-store` to bypass cache read/write, or `Cache-Control: max-age=<seconds>` to override TTL for one request. Cache hits are free, fresh upstream calls are metered. Cached responses may preserve validators such as `ETag` and `Last-Modified`, but do not rely on conditional revalidation semantics.
@@ -122,6 +122,7 @@ When the user gives a LinkedIn profile URL or handle, pass it through unchanged 
 - Capture output to a temp file when it might exceed a few thousand tokens, then `jq` over it: `social linkedin connections --limit 100 --offset 0 > /tmp/connections.json`. This also avoids re-billing the same query.
 - Project only the fields you need with `jq` — full payloads are large and burn context fast.
 - For user-facing summaries, build a short markdown table from `jq` output rather than dumping raw JSON.
+- After metered calls, inspect `.meta.usage.credits` when present. It contains `{included, used}`. Derive `available = max(0, included - used)` and `overageCredits = max(0, used - included)`.
 - Surface errors verbatim — codes like `scope_missing`, `endpoint_not_available_in_v1`, `rate_limited`, `platform_not_connected` are precise. Full error catalog in `references/setup.md`.
 
 Exit codes are stable:
@@ -147,6 +148,8 @@ social account login
 Choose Read + Write in the login prompt.
 
 Fresh upstream proxy calls are metered; cache hits are free. Before high-fanout reads, inspect `social schema "<command path>" | jq '.cost'` or use `social schema --leaves` and read `.commands["<command path>"].cost`. Prefer cached reads unless freshness matters; use `-H "Cache-Control: no-cache"` only when the schema shows `header` on the command and the task needs fresh upstream data. Use `-H "Cache-Control: no-store"` only when the response must not be stored, and `-H "Cache-Control: max-age=<seconds>"` to narrow or extend one request's TTL. Quote estimated usage credits before loops over pages, posts, companies, followers, or reaction graphs, then **cap pagination loops** with a safety bound (e.g. 20 pages × 100 = 2000 items) and surface the cap if it trips. Inspect seats/subscription with `social account billing`, open hosted billing with `social account billing portal`, and audit actual spend after a run with `social account usage` and `social account logs`.
+
+Track usage warnings agent-side during a task. Use the latest observed `.meta.usage.credits` or `social account usage` output, and do not expect the CLI to dedupe warnings globally. Report when the current run crosses 25%, 50%, 75%, or 100% of included credits; when `overageCredits > 0`; and when overage crosses `50_000`, `100_000`, `200_000`, `500_000`, `1_000_000`, `2_000_000`, or `5_000_000` credits.
 
 ## Safety rules
 
