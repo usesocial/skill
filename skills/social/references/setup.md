@@ -152,7 +152,8 @@ for the user to act on.
 
 Exit codes are typed: `2` means fix command usage or local validation, `3` means not found,
 `4` means login/scope/auth, `5` means API or unexpected failure, and `7` means rate
-limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before retrying.
+limited. LinkedIn proxy requests retry automatically, honoring `Retry-After` first and
+then exponential fallback; for other `7` errors, JSON may include `retryAfterSeconds`.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -161,7 +162,7 @@ limited. On `7`, JSON errors may include `retryAfterSeconds`; back off before re
 | `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`.         |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed handle/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
-| `rate_limited`                                       | Upstream throttle hit.                            | Back off per the retry hint. X quotas are tight on free tiers.           |
+| `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries automatically; otherwise back off per the retry hint. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
 | `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
