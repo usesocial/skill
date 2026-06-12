@@ -24,7 +24,7 @@ social account | feedback | schema | x | linkedin
 
 - `social account ...` - login, logout, connect, reconnect, disconnect, inspect accounts, billing, usage, logs, and CLI config.
 - `social feedback bug|feature` - submit a bug report or feature request. Pipe the final report text via stdin.
-- `social schema [command path]` - authoritative command tree. Use bare `social schema` to plan, `social schema --list` for the compact runnable index, and `social schema --leaves` only when you need full contracts in a file.
+- `social schema [command path]` - authoritative command tree. Use bare `social schema` to plan, `social schema --list` for the compact cost/capability index, and `social schema --leaves` only when you need full contracts in a file.
 - `social x ...` - X profiles, live reads, writes, sync, and SQL. Load `references/x.md`.
 - `social linkedin ...` - LinkedIn profiles, live reads, writes, sync, and SQL. Load `references/linkedin.md`.
 
@@ -38,19 +38,18 @@ Use live reads for fresh data or someone else's graph. Use `sql` for your own sy
 
 ## First-use setup
 
-Before platform work, confirm the CLI is installed, the user is signed in, and the platform is connected:
+Before platform work, confirm the CLI is installed, the user is signed in, and the platform is connected. Bare `social account` answers all three in one free call - do not probe with metered live reads like `profile`:
 
 ```bash
-social linkedin profile 2>&1 | head -c 400
-social x profile 2>&1 | head -c 400
+social account 2>&1 | head -c 600
 ```
 
 Interpret the output:
 
-- Exit 0 with a JSON envelope - installed, signed in, connected.
 - `command not found: social` - ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal.
-- `unauthenticated`, `401`, `Not signed in` - ask the user to run `social account login` interactively.
-- `platform_not_connected` - run `social account connect linkedin` or `social account connect x`; in non-TTY runs, surface the printed URL.
+- `"status": "logged_out"` or `"expired"` - ask the user to run `social account login` interactively.
+- `"status": "logged_in"` with a connected-account row for the platform - ready.
+- Logged in but no row for the platform - run `social account connect linkedin` or `social account connect x`; in non-TTY runs, surface the printed URL.
 
 Do not background `social account login` or `social account connect <platform>`.
 
@@ -91,19 +90,20 @@ social x sync
 social x sync messages
 social linkedin sync
 social linkedin sync requests
+social linkedin sync messages --since 7:days
 ```
 
-Bare `sync` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, and `objectCount`.
+Bare `sync` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, and `objectCount`. Where `supportsSince` is true, `--since <ISO|2:days|3:weeks|5:hours>` pulls only newer items and spends fewer credits than a full re-pull. `--reset` deletes a collection's local rows and sync state so the next sync rebuilds from scratch.
 
 `sql` reads the selected platform mirror:
 
 ```bash
 social x sql
-social x sql "SELECT sender_handle, text FROM x_messages ORDER BY created_at DESC LIMIT 20"
-social linkedin sql "SELECT sender_display_name, text FROM li_messages ORDER BY timestamp DESC LIMIT 20"
+social x sql "SELECT sender_username, text FROM x_messages ORDER BY created_at DESC LIMIT 20"
+social linkedin sql "SELECT sender_name, text FROM li_messages ORDER BY created_at DESC LIMIT 20"
 ```
 
-Bare `sql` prints the platform schema, row counts, and freshness. Query results are enveloped as `.items[]`. Schema output is `.data`.
+Bare `sql` prints compact JSON under `.data`: `path`, `notes`, `joins`, `enums`, and `tables[]` with `name`, `rows`, `synced_at`, `query_ready`, `columns`, and `indexed`. Query results are enveloped as `.items[]`.
 
 Local SQL metadata:
 
@@ -127,7 +127,7 @@ No synced x_messages yet — run `social x sync messages` first.
 No synced li_requests yet — run `social linkedin sync requests` first.
 ```
 
-`x_messages` is a view over internal `x_raw_messages`. It adds `sender_handle`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. Query `x_messages`; do not query `x_raw_messages`. `li_messages` already stores flat `sender_*` columns.
+Views expose curated columns and omit `raw`/`synced_at`. Each view has a `<table>_raw` twin with all upstream columns plus `raw` and `synced_at`; query upstream JSON with `json_extract(raw, '$.field')`. X raw JSON is flat; LinkedIn raw JSON nests the person under `.user`.
 
 There is no TTL auto-refresh on reads. Run `sync` when you want newer local data. Freshness is visible in `sync` status and `meta.cache.tables`.
 

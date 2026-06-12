@@ -37,7 +37,7 @@ Fresh data or someone else's graph: the live `followers`/`following` commands ab
 | `likers <target>` | `--limit`, `--cursor`, `--user-fields`, `--account`, `-H/--header` | Users who liked a post. |
 | `reposters <target>` | `--limit`, `--cursor`, `--user-fields`, `--account`, `-H/--header` | Users who reposted a post. |
 
-Field flags extend default comma-separated presets and de-dupe repeated fields. Timeline, liked, mentions, quotes, replies, tweet, and tweets use safe tweet/user/media/poll/place defaults. If a returned post has only `author_id`, budget a `profile profile_id:<id>` follow-up when the author name matters.
+Field flags extend default comma-separated presets and de-dupe repeated fields. Timeline, liked, mentions, quotes, replies, tweet, and tweets use safe tweet/user/media/poll/place defaults. When the response includes expansion users, the CLI joins them into each post's `.author`; if a post still has only `author_id`, budget a `profile profile_id:<id>` follow-up when the author name matters.
 
 ## Writes
 
@@ -60,10 +60,13 @@ Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `messages
 ```bash
 social x sync
 social x sync messages
+social x sync tweets --since 7:days
 social x sql
 ```
 
-Bare `sql` prints schema, row counts, and freshness. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
+`--since` limits a sync to newer items — an ISO date/datetime or a compact duration like `2:days`, `3:weeks`, `5:hours` — on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
 Never-synced tables fail with the sync command:
 
@@ -71,18 +74,18 @@ Never-synced tables fail with the sync command:
 No synced x_messages yet — run `social x sync messages` first.
 ```
 
-`x_messages` is a view. It includes `sender_handle`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`; `x_raw_messages` is internal.
+`x_messages` is a view. It includes `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
 
 ### Recipes
 
 ```bash
 # Inbox triage.
 social x sync messages
-social x sql "SELECT sender_handle, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages ORDER BY created_at DESC LIMIT 20" \
+social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages ORDER BY created_at DESC LIMIT 20" \
   | jq '.items[]'
 
-# Conversation with one person; the view resolves sender_handle.
-social x sql "SELECT sender_handle, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE sender_handle = 'handle' OR dm_conversation_id = (SELECT dm_conversation_id FROM x_messages WHERE sender_handle = 'handle' LIMIT 1) ORDER BY created_at ASC" \
+# Conversation with one person; the view resolves sender_username.
+social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE sender_username = 'handle' OR conversation_id = (SELECT conversation_id FROM x_messages WHERE sender_username = 'handle' LIMIT 1) ORDER BY created_at ASC" \
   | jq '.items[]'
 
 # Top synced followers.
@@ -93,6 +96,12 @@ social x sql "SELECT username, name, followers_count FROM x_followers ORDER BY f
 # Saved-post export.
 social x sync bookmarks
 social x sql "SELECT text, url FROM x_bookmarks ORDER BY created_at DESC LIMIT 1000" \
+  | jq '.items[]'
+
+# Own-content audit, free after sync. Metric columns are flat:
+# like_count, retweet_count, reply_count, quote_count, bookmark_count, impression_count.
+social x sync tweets
+social x sql "SELECT text, url, like_count, retweet_count, reply_count, impression_count FROM x_tweets ORDER BY like_count DESC LIMIT 10" \
   | jq '.items[]'
 ```
 
@@ -148,6 +157,8 @@ jq '.meta.cursor // empty' /tmp/tweets.json
 ## End-to-end sketches
 
 ### Content audit
+
+For your own account, prefer the free path: `social x sync tweets`, then the `x_tweets` SQL recipe above. Use the live read below for someone else's account:
 
 ```bash
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \

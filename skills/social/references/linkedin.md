@@ -19,15 +19,15 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | --- | --- | --- |
 | `profile [target]` | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header` | Connected profile by default. Target accepts `@public-identifier`, profile URL, profile URN, or `profile_id:<id>`. |
 | `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company handle, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
-| `comments <post>` | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--comment-id <id>`, `--account`, `-H/--header` | Comments on a post; `--comment-id` fetches replies to one comment. |
-| `reactions <post>` | `--limit 1-100`, `--offset`, `--comment-id <id>`, `--account`, `-H/--header` | Reactions on a post or comment. |
+| `comments <post>` | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--account`, `-H/--header` | Comments on a post. |
+| `reactions <post>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
 | `jobs <company>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Job postings for a company. |
 | `connections [target]` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live and metered; omit target for the selected account. |
 
 Fresh data or someone else's graph: the live `connections` command above. Your own graph for free: sync, then query `li_connections` with SQL.
 
-`<post>` accepts the numeric ID, `post_id:<id>`, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`, an activity URL, or the `social_id` returned in a post payload.
+`<post>` accepts `post_id:<id>`, a post URL, or a post URN (`urn:li:activity:<id>`, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`). Bare numeric IDs are not accepted; use the `id` field returned in post payloads as `post_id:<id>`.
 
 ## Search
 
@@ -46,11 +46,11 @@ social linkedin search posts "agent CLI" --limit 25 --offset 0 \
 social linkedin search people "devtools founder" --limit 25 --offset 0
 ```
 
-People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
+People-search fields you can rank on without another live read: `id`, `username`, `name`, `headline`, `location`, `distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
 
 ```bash
 social linkedin search people "devtools founder" --limit 100 --offset 0 \
-  | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {display_name, headline, network_distance, followers_count}'
+  | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {name, headline, distance, followers_count}'
 ```
 
 ## Writes
@@ -61,7 +61,7 @@ Confirm with the user before every write.
 | --- | --- | --- |
 | `post` | body from stdin | Create a post. |
 | `comment <post>` | body from stdin | Comment on a post. |
-| `react <post>` | `--type <name>`, `--account` | React to a post or comment. |
+| `react <post>` | `--type <name>`, `--account` | React to a post. |
 | `requests send <profile>` | optional note from stdin | Send a connection request. |
 | `requests accept request_id:<id>` | `--account` | Accept a received request. Use SQL to inspect request IDs first. |
 | `requests cancel request_id:<id>` | `--account` | Cancel a sent request or refuse a received request. |
@@ -79,10 +79,13 @@ Syncable collections: `connections`, `posts`, `messages`, `requests`.
 ```bash
 social linkedin sync
 social linkedin sync messages
+social linkedin sync messages --since 7:days
 social linkedin sql
 ```
 
-Bare `sql` prints schema, row counts, and freshness. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
+`--since` limits a sync to newer items — an ISO date/datetime or a compact duration like `2:days`, `3:weeks`, `5:hours` — on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
 `sync_state.object_count` is the most recent run's fetched objects; a checkpoint-stop run reports `0`. Use `SELECT count(*)` for table totals.
 
@@ -93,25 +96,39 @@ No synced li_messages yet — run `social linkedin sync messages` first.
 No synced li_requests yet — run `social linkedin sync requests` first.
 ```
 
-`li_messages` stores flat `sender_*` columns. `li_conversations` is synced as the internal parent of messages; query it when you need unread counts or chat-level metadata.
+`li_messages` stores flat `sender_*` columns. `li_conversations` is synced as the parent of messages; query it when you need unread counts, `last_message_at`, `type`, or chat-level metadata.
 
 ### Recipes
 
 ```bash
 # Inbox.
 social linkedin sync messages
-social linkedin sql "SELECT sender_display_name, text, datetime(timestamp/1000,'unixepoch') AS at FROM li_messages ORDER BY timestamp DESC LIMIT 20" \
+social linkedin sql "SELECT sender_name, text, datetime(created_at/1000,'unixepoch') AS at FROM li_messages ORDER BY created_at DESC LIMIT 20" \
   | jq '.items[]'
 
 # Received invitations.
 social linkedin sync requests
-social linkedin sql "SELECT user_display_name, user_public_identifier, datetime(created_at/1000,'unixepoch') AS at FROM li_requests WHERE type='received' ORDER BY created_at DESC LIMIT 50" \
+social linkedin sql "SELECT user_name, user_username, datetime(created_at/1000,'unixepoch') AS at FROM li_requests WHERE type='received' ORDER BY created_at DESC LIMIT 50" \
+  | jq '.items[]'
+
+# Invitation notes.
+social linkedin sql "SELECT user_name, message FROM li_requests WHERE type = 'received' AND message IS NOT NULL ORDER BY created_at DESC" \
+  | jq '.items[]'
+
+# Company/employer search.
+social linkedin sync connections
+social linkedin sql "SELECT user_username, user_name, user_headline FROM li_connections WHERE user_headline LIKE '%<company>%' OR user_description LIKE '%<company>%'" \
   | jq '.items[]'
 
 # Connections you have never messaged.
 social linkedin sync connections
 social linkedin sync messages
-social linkedin sql "SELECT c.user_display_name, c.user_public_identifier, c.user_profile_url FROM li_connections c LEFT JOIN li_messages m ON m.sender_id = c.user_id WHERE m.id IS NULL ORDER BY c.created_at DESC LIMIT 100" \
+social linkedin sql "SELECT c.user_name, c.user_username, c.user_profile_url FROM li_connections c LEFT JOIN li_messages m ON m.sender_id = c.user_id WHERE m.id IS NULL ORDER BY c.created_at DESC LIMIT 100" \
+  | jq '.items[]'
+
+# Own-post performance, free after sync.
+social linkedin sync posts
+social linkedin sql "SELECT text, share_url, comments_counter, reposts_counter, impressions_counter, datetime(created_at/1000,'unixepoch') AS at FROM li_posts ORDER BY created_at DESC LIMIT 25" \
   | jq '.items[]'
 ```
 
@@ -149,11 +166,11 @@ echo "I liked your recent work on AI infrastructure." | social linkedin requests
 Run against live command JSON unless the recipe says SQL:
 
 ```bash
-# Display name, description, and profile URL from profile-style rows.
-jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
+# Name, description, and profile URL from profile-style rows.
+jq -r '.items[] | [.name, .description, (.profile_url // .url)] | @tsv'
 
 # Drop verbose fields.
-jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
+jq '.items[] | {id, url: (.profile_url // .url), name, description}'
 
 # Inspect billing and paging metadata.
 jq '{cost: .meta.cost, cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolved}'
@@ -164,7 +181,7 @@ Save live outputs before chaining so you do not re-bill:
 ```bash
 social linkedin search people "devtools founder" --limit 100 > /tmp/people.json
 jq '.items | length' /tmp/people.json
-jq -r '.items[].public_identifier // empty' /tmp/people.json | sort -u
+jq -r '.items[].username // empty' /tmp/people.json | sort -u
 ```
 
 ## End-to-end sketches
@@ -179,8 +196,8 @@ social linkedin comments "$POST" --limit 100 --sort-by MOST_RELEVANT \
 social linkedin reactions "$POST" --limit 100 --offset 0 > /tmp/reactions-1.json
 social linkedin reactions "$POST" --limit 100 --offset 100 > /tmp/reactions-2.json
 
-jq -r '.items[] | {id, text, author: .author.display_name, reactions: .reactions_counter}' /tmp/comments.json
-jq -r '.items[] | {type: .value, name: .sender.display_name}' /tmp/reactions-1.json
+jq -r '.items[] | {id, text, author: .author.name, reactions: .reactions_counter}' /tmp/comments.json
+jq -r '.items[] | {type: .value, name: .sender.name}' /tmp/reactions-1.json
 ```
 
 ### Billing audit
