@@ -110,9 +110,6 @@ Timestamps are epoch millis. Use `datetime(col/1000,'unixepoch')` in SQLite.
 ## Example live reads
 
 ```bash
-# Smoke test.
-social x profile
-
 # Home timeline, excluding replies.
 social x timeline --limit 25 --exclude replies
 

@@ -137,9 +137,6 @@ Timestamps are epoch millis. Use `datetime(col/1000,'unixepoch')` in SQLite.
 ## Example live reads
 
 ```bash
-# Smoke test.
-social linkedin profile
-
 # Search.
 social linkedin search posts "agent CLI" --limit 25 --offset 0
 
