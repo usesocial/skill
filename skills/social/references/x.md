@@ -68,6 +68,8 @@ social x sql
 
 `--timeout <seconds>` is accepted for sync command parity and validates as a positive integer. X does not add in-process rate-limit retries; on a sync 429, use the JSON `resumeAt`, `retryCommand`, `hint`, and `syncResume` fields when present.
 
+`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`.
+
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
 Never-synced tables fail with the sync command:
@@ -76,24 +78,26 @@ Never-synced tables fail with the sync command:
 No synced x_messages yet — run `social x sync messages` first.
 ```
 
-`x_messages` is a view. It includes `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
+`x_messages` is a view. It includes `conversation_type` (`1to1` or `group`), `has_attachments` (0/1), `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. For `1to1` rows it also includes `counterpart_id`, `counterpart_username`, `counterpart_name`, `counterpart_avatar_url`, and `counterpart_headline` for the other participant; counterpart columns are `null` on group rows. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
 
-Two triage caveats: `text` is `null` on attachment-only DMs — not an error; the message carried media, check `attachments`. And `sender_*` describes each message's sender, so a group thread surfaces as whoever spoke last — aggregate per `conversation_id` to see who is in it (recipe below).
+`x_conversation_participants` is a derived view with `conversation_id`, `participant_id`, `participant_username`, `participant_name`, and `participant_avatar_url`. It uses observed senders, dash-form 1:1 conversation IDs, and `ParticipantsJoin`/`ParticipantsLeave` `participant_ids`.
+
+Triage caveats: `text` is `null` on attachment-only DMs — not an error; the message carried media or a card, and `has_attachments` will be `1`. `x_conversation_participants` cannot see lurkers who never sent a message and never triggered a join/leave event. A dash-free conversation with only one observed inbound message is classified as `group`.
 
 ### Recipes
 
 ```bash
 # Inbox triage.
 social x sync messages
-social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages ORDER BY created_at DESC LIMIT 20" \
+social x sql "SELECT conversation_type, COALESCE(counterpart_username, sender_username) AS visible_user, sender_username, has_attachments, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages ORDER BY created_at DESC LIMIT 20" \
   | jq '.items[]'
 
-# Conversation with one person; the view resolves sender_username.
-social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE sender_username = 'username' OR conversation_id = (SELECT conversation_id FROM x_messages WHERE sender_username = 'username' LIMIT 1) ORDER BY created_at ASC" \
+# Conversation with one person; 1:1 rows expose counterpart_username.
+social x sql "SELECT sender_username, counterpart_username, text, has_attachments, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE conversation_id = (SELECT conversation_id FROM x_messages WHERE sender_username = 'username' OR counterpart_username = 'username' LIMIT 1) ORDER BY created_at ASC" \
   | jq '.items[]'
 
-# Who is in each thread; >1 sender means a group chat.
-social x sql "SELECT conversation_id, COUNT(DISTINCT sender_username) AS senders, GROUP_CONCAT(DISTINCT sender_username) AS participants, datetime(MAX(created_at)/1000,'unixepoch') AS last_at FROM x_messages GROUP BY conversation_id ORDER BY MAX(created_at) DESC LIMIT 20" \
+# Who is in each thread, using the derived participants view.
+social x sql "SELECT m.conversation_id, m.conversation_type, GROUP_CONCAT(DISTINCT COALESCE(p.participant_username, p.participant_id)) AS participants, datetime(MAX(m.created_at)/1000,'unixepoch') AS last_at FROM x_messages m LEFT JOIN x_conversation_participants p ON p.conversation_id = m.conversation_id GROUP BY m.conversation_id, m.conversation_type ORDER BY MAX(m.created_at) DESC LIMIT 20" \
   | jq '.items[]'
 
 # Top synced followers.

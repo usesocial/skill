@@ -58,12 +58,12 @@ Full setup detail lives in `references/setup.md`.
 ## Invocation conventions
 
 - Output is compact JSON.
-- Platform reads return `{ account, items | data, meta }`; `social account` service commands (`account`, `usage`, `billing`, `logs`) return bare JSON, with `logs` returning `{ items, meta: { cursor } }`.
+- Platform reads return `{ account, items | data, meta }`; sync commands return `{ data, meta }`; `social account` service commands (`account`, `usage`, `billing`, `logs`) return bare JSON, with `logs` returning `{ items, meta: { cursor } }`.
 - List results are `.items[]`.
-- Single resources and schema-style objects are `.data`.
+- Single resources, sync payloads, and schema-style objects are `.data`.
 - Errors are JSON on stderr.
 - `.meta.cost` exists on read/write envelopes. `sql` always reports `{ "credits": 0, "metered": false }`.
-- `.meta.cache` is proxy cache metadata for live reads, or local mirror metadata for SQL.
+- `.meta.cache` is proxy cache metadata for live reads, or local mirror metadata for SQL; auto-upgrades appear as `.meta.cache.migration`.
 - `.meta.cursor` is cursor pagination when present. `.meta.totalCount` is offset-list total count when present.
 - `--account <@username|profile_id:<id>>` selects a connected account.
 - `-H, --header <Name: value>` is only for cacheable live reads whose help/schema list it.
@@ -93,7 +93,7 @@ social linkedin sync requests
 social linkedin sync messages --since 2026-05-04 --timeout 900
 ```
 
-Bare `sync` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, and `objectCount`. Where `supportsSince` is true, `--since <ISO date/datetime>` pulls only newer items and spends fewer credits than a full re-pull. Use a date like `2026-05-04` or a datetime like `2026-05-04T00:00:00Z`. `--reset` deletes a collection's local rows and sync state so the next sync rebuilds from scratch.
+Bare `sync` returns `{ data, meta }`; `.data[]` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, and `objectCount`. Where `supportsSince` is true, `--since <ISO date/datetime>` pulls only newer items and spends fewer credits than a full re-pull. Use a date like `2026-05-04` or a datetime like `2026-05-04T00:00:00Z`. `--reset` returns its reset object under `.data` after deleting a collection's local rows and sync state so the next sync rebuilds from scratch.
 
 `--timeout <seconds>` is a positive integer wait budget for sync rate-limit handling. LinkedIn sync may sleep and retry while the next wait fits the budget; X keeps its current no-new-retry behavior. Rate-limit JSON can include `retryAfterSeconds`, `resumeAt`, `retryCommand`, `hint`, and `syncResume`. If `syncResume.cursorPersisted` is true, re-run `retryCommand`; already-synced pages are saved and the sync resumes from the saved cursor.
 
@@ -190,8 +190,9 @@ Never include bearer tokens, magic links, cookies, private message dumps, or unr
 
 ## Output handling
 
-- Use `jq '.items[]'` for lists.
-- Use `jq '.data'` for one resource or bare `sql` schema output.
+- Use `jq '.items[]'` for live and SQL lists.
+- Use `jq '.data[]'` for bare `sync` listings.
+- Use `jq '.data'` for one resource, sync summaries/resets, or bare `sql` schema output.
 - Use `jq '.meta.cost'` after metered calls.
 - Use `social account usage` and `social account logs` after a run to audit spend.
 - On exit `7` or repeated sync failures, `social account logs --platform <platform> --limit 20` shows recent upstream calls with status and credits — a run of `429`s sizes the rate-limit window.

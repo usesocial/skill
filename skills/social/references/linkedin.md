@@ -89,6 +89,8 @@ social linkedin sql
 
 `--timeout <seconds>` is a positive integer wait budget. LinkedIn sync may sleep and retry rate limits while the next wait fits the remaining budget; without it, long waits exit early. Rate-limit JSON can include `resumeAt`, `retryCommand`, `hint`, and `syncResume`; when `syncResume.cursorPersisted` is true, re-run `retryCommand` to resume from the saved cursor.
 
+`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`.
+
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
 `sync_state.object_count` is the most recent run's fetched objects; a checkpoint-stop run reports `0`. Use `SELECT count(*)` for table totals.
