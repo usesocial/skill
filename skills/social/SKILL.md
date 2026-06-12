@@ -33,7 +33,7 @@ If the user says "Twitter", use X. If a command is unclear, run `social <platfor
 
 ## Product model
 
-`sync` pulls your own data down; it is explicit and spends credits. `sql` queries that local mirror; it is free, instant, and read-only. Named read commands hit the live network and spend credits; `x tweets <target>` and `linkedin posts <target>` require a target. Writes act.
+`sync` pulls your own data down; it is explicit and spends credits. `sql` queries that local mirror; it is free, instant, and read-only. Named read commands hit the live network and spend credits. Live reads are for fresh data or someone else's graph; your own graph, inbox, saved posts, posts, and request lists are sync+sql. Writes act.
 
 Use live reads for fresh data or someone else's graph. Use `sql` for your own synced graph, inbox, saved posts, posts, and request lists after a sync.
 
@@ -89,7 +89,7 @@ Pipe a JSON object for advanced payload fields. Non-object JSON is rejected. If 
 
 ## Local mirror
 
-Syncable X collections: `tweets`, `followers`, `following`, `bookmarks`, `messages`.
+Syncable X collections: `tweets`, `followers`, `following`, `bookmarks`, `liked`, `mentions`, `messages`.
 
 Syncable LinkedIn collections: `connections`, `posts`, `messages`, `requests`.
 
@@ -101,9 +101,9 @@ social linkedin sync requests
 social linkedin sync messages --since 2026-05-04 --timeout 900
 ```
 
-Bare `sync` returns `{ data, meta }`; `.data[]` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, and `objectCount`. Where `supportsSince` is true, `--since <ISO date/datetime>` pulls only newer items and spends fewer credits than a full re-pull. Use a date like `2026-05-04` or a datetime like `2026-05-04T00:00:00Z`. `--reset` returns its reset object under `.data` after deleting a collection's local rows and sync state so the next sync rebuilds from scratch.
+Bare `sync` returns `{ data, meta }`; `.data[]` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, `objectCount`, and `totalRows`. `objectCount` is only the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size. Where `supportsSince` is true, `--since <ISO date/datetime>` pulls only newer items and spends fewer credits than a full re-pull. Use a date like `2026-05-04` or a datetime like `2026-05-04T00:00:00Z`. `--reset` returns its reset object under `.data` after deleting a collection's local rows and sync state so the next sync rebuilds from scratch.
 
-Successful writes update the local mirror immediately when that collection has synced at least once. Sends insert the sent message, cancels/accepts remove the pending request, and bookmarks add/remove rows; no re-sync is needed to see your own write after an initial sync. Never use `--reset` just to verify a recent write: it re-pulls and re-bills the collection's entire history; hundreds of DMs can cost thousands of credits.
+Successful writes update the local mirror immediately when that collection has synced at least once. Sends insert the sent message, cancels/accepts remove the pending request, bookmarks add/remove rows, and likes add/remove rows; no re-sync is needed to see your own write after an initial sync. Never use `--reset` just to verify a recent write: it re-pulls and re-bills the collection's entire history; hundreds of DMs can cost thousands of credits.
 
 `--timeout <seconds>` is a positive integer wait budget for sync rate-limit handling. LinkedIn sync may sleep and retry while the next wait fits the budget; X keeps its current no-new-retry behavior. Rate-limit JSON can include `retryAfterSeconds`, `resumeAt`, `retryCommand`, `hint`, and `syncResume`. If `syncResume.cursorPersisted` is true, re-run `retryCommand`; already-synced pages are saved and the sync resumes from the saved cursor.
 
@@ -145,7 +145,7 @@ There is no TTL auto-refresh on reads. Run `sync` when you want newer local data
 
 ## Live reads and cache
 
-Named read commands call the live network and spend credits. Examples: `profile`, `timeline`, `liked`, `mentions`, `followers`, `following`, `likers`, `quotes`, `replies`, `reposters`, `tweet`, `tweets <target>`, LinkedIn `posts <target>`, `comments`, `reactions`, `company`, `jobs`, `connections`, and `search`.
+Named read commands call the live network and spend credits. Examples: `profile`, `timeline`, `liked <target>`, `mentions <target>`, `followers <target>`, `following <target>`, `likers`, `quotes`, `replies`, `reposters`, `tweet`, `tweets <target>`, LinkedIn `posts <target>`, `comments`, `reactions`, `company`, `jobs`, `connections <target>`, and `search`.
 
 Live reads may use the proxy cache. Cache hits are free; fresh upstream calls are metered. Cache config is independent from the local mirror:
 

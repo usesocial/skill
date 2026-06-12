@@ -18,13 +18,13 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | Command | Args | Notes |
 | --- | --- | --- |
 | `profile [target]` | `--user-fields`, `--tweet-fields`, `--expansions`, `--account` | Authenticated profile by default. Target accepts `@username`, profile URL, or `profile_id:<id>`. |
-| `tweets <target>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, field flags, `--account`, `-H/--header` | Live, metered, target required. |
-| `liked [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts a user liked; omit target for the selected account. |
-| `mentions [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts mentioning a user; omit target for the selected account. |
-| `followers [target]` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | A user's followers, live and metered; omit target for the selected account. |
-| `following [target]` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | Accounts a user follows, live and metered; omit target for the selected account. |
+| `tweets <target>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, field flags, `--account`, `-H/--header` | Live and metered; target required. For your own posts, run `social x sync tweets`, then query `x_tweets` with SQL. |
+| `liked <target>` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts a user liked, live and metered; target required. For your own likes, run `social x sync liked`, then query `x_liked` with SQL. |
+| `mentions <target>` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts mentioning a user, live and metered; target required. For mentions of you, run `social x sync mentions`, then query `x_mentions` with SQL. |
+| `followers <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | A user's followers, live and metered; target required. For your own graph, run `social x sync followers`, then query `x_followers` with SQL. |
+| `following <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | Accounts a user follows, live and metered; target required. For your own graph, run `social x sync following`, then query `x_following` with SQL. |
 
-Fresh data or someone else's graph: the live `followers`/`following` commands above. Your own graph for free: sync, then query `x_followers` or `x_following` with SQL.
+Live reads are for fresh data or someone else's graph. Your own graph and posts are sync+sql: `social x sync followers|following|tweets|liked|mentions`, then query `x_followers`, `x_following`, `x_tweets`, `x_liked`, or `x_mentions`.
 
 ## Tweets and engagement
 
@@ -55,7 +55,7 @@ Confirm with the user before every write.
 
 ## Local mirror (SQL)
 
-Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `messages`.
+Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `liked`, `mentions`, `messages`.
 
 ```bash
 social x sync
@@ -69,9 +69,11 @@ social x sql
 
 Just-sent DMs are inserted into `x_messages` by the send command when messages has synced at least once. The send response's `dm_event_id` is `x_messages.id`; `dm_conversation_id` is `x_messages.conversation_id`. Upstream `/dm_events` can lag a few minutes after a send; never `--reset` to verify a send. `--reset` re-pulls and re-bills the full collection history.
 
+Likes are inserted into `x_liked` by `social x like <target>` and removed by `social x unlike <target>` after `liked` has synced at least once. The write-through row is sparse until the next sync enriches it from upstream.
+
 `--timeout <seconds>` is accepted for sync command parity and validates as a positive integer. X does not add in-process rate-limit retries; on a sync 429, use the JSON `resumeAt`, `retryCommand`, `hint`, and `syncResume` fields when present.
 
-`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`.
+`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
@@ -113,8 +115,20 @@ social x sync bookmarks
 social x sql "SELECT text, url FROM x_bookmarks ORDER BY created_at DESC LIMIT 1000" \
   | jq '.items[]'
 
+# Own likes, free after sync.
+social x sync liked
+social x sql "SELECT text, url, like_count, retweet_count, reply_count FROM x_liked ORDER BY created_at DESC LIMIT 100" \
+  | jq '.items[]'
+
+# Mentions of you, free after sync.
+social x sync mentions
+social x sql "SELECT text, url, author_id, like_count, retweet_count, reply_count FROM x_mentions ORDER BY created_at DESC LIMIT 100" \
+  | jq '.items[]'
+
 # Own-content audit, free after sync. Metric columns are flat:
 # like_count, retweet_count, reply_count, quote_count, bookmark_count, impression_count.
+# On old tweets, impression_count can be 0 when upstream no longer reports impressions;
+# treat that as not available, not literal zero impressions.
 social x sync tweets
 social x sql "SELECT text, url, like_count, retweet_count, reply_count, impression_count FROM x_tweets ORDER BY like_count DESC LIMIT 10" \
   | jq '.items[]'

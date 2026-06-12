@@ -23,9 +23,9 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | `reactions <post>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
 | `jobs <company>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Job postings for a company. |
-| `connections [target]` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live and metered; omit target for the selected account. |
+| `connections <target>` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live and metered; target required. For your own graph, run `social linkedin sync connections`, then query `li_connections` with SQL. |
 
-Fresh data or someone else's graph: the live `connections` command above. Your own graph for free: sync, then query `li_connections` with SQL.
+Live reads are for fresh data or someone else's graph. Your own graph is sync+sql: `social linkedin sync connections`, then query `li_connections`.
 
 `<post>` accepts `post_id:<id>`, a post URL, or a post URN (`urn:li:activity:<id>`, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`). Bare numeric IDs are not accepted; use the `id` field returned in post payloads as `post_id:<id>`.
 
@@ -91,11 +91,11 @@ Successful write commands update synced collections immediately: `requests cance
 
 `--timeout <seconds>` is a positive integer wait budget. LinkedIn sync may sleep and retry rate limits while the next wait fits the remaining budget; without it, long waits exit early. Rate-limit JSON can include `resumeAt`, `retryCommand`, `hint`, and `syncResume`; when `syncResume.cursorPersisted` is true, re-run `retryCommand` to resume from the saved cursor.
 
-`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`.
+`sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
-`sync_state.object_count` is the most recent run's fetched objects; a checkpoint-stop run reports `0`. Use `SELECT count(*)` for table totals.
+`sync_state.object_count` backs `objectCount`; use `totalRows` or `SELECT count(*)` for table totals.
 
 Never-synced tables fail with the sync command:
 
