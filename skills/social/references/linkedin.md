@@ -18,7 +18,7 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | Command | Args | Notes |
 | --- | --- | --- |
 | `profile [target]` | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header` | Connected profile by default. Target accepts `@public-identifier`, profile URL, profile URN, or `profile_id:<id>`. |
-| `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company handle, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
+| `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company username, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
 | `comments <post>` | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--account`, `-H/--header` | Comments on a post. |
 | `reactions <post>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
@@ -46,11 +46,13 @@ social linkedin search posts "agent CLI" --limit 25 --offset 0 \
 social linkedin search people "devtools founder" --limit 25 --offset 0
 ```
 
-People-search fields you can rank on without another live read: `id`, `username`, `name`, `headline`, `location`, `distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
+People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
+
+Live responses keep upstream field names (`display_name`, `public_identifier`, `network_distance`); the normalized `name`/`username`/`distance` names exist only as local SQL view columns.
 
 ```bash
 social linkedin search people "devtools founder" --limit 100 --offset 0 \
-  | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {name, headline, distance, followers_count}'
+  | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {display_name, headline, network_distance, followers_count}'
 ```
 
 ## Writes
@@ -79,11 +81,13 @@ Syncable collections: `connections`, `posts`, `messages`, `requests`.
 ```bash
 social linkedin sync
 social linkedin sync messages
-social linkedin sync messages --since 7:days
+social linkedin sync messages --since 2026-05-04 --timeout 900
 social linkedin sql
 ```
 
-`--since` limits a sync to newer items — an ISO date/datetime or a compact duration like `2:days`, `3:weeks`, `5:hours` — on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+`--timeout <seconds>` is a positive integer wait budget. LinkedIn sync may sleep and retry rate limits while the next wait fits the remaining budget; without it, long waits exit early. Rate-limit JSON can include `resumeAt`, `retryCommand`, `hint`, and `syncResume`; when `syncResume.cursorPersisted` is true, re-run `retryCommand` to resume from the saved cursor.
 
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
@@ -164,10 +168,10 @@ Run against live command JSON unless the recipe says SQL:
 
 ```bash
 # Name, description, and profile URL from profile-style rows.
-jq -r '.items[] | [.name, .description, (.profile_url // .url)] | @tsv'
+jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
 
 # Drop verbose fields.
-jq '.items[] | {id, url: (.profile_url // .url), name, description}'
+jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
 
 # Inspect billing and paging metadata.
 jq '{cost: .meta.cost, cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolved}'
@@ -178,7 +182,7 @@ Save live outputs before chaining so you do not re-bill:
 ```bash
 social linkedin search people "devtools founder" --limit 100 > /tmp/people.json
 jq '.items | length' /tmp/people.json
-jq -r '.items[].username // empty' /tmp/people.json | sort -u
+jq -r '.items[].public_identifier // empty' /tmp/people.json | sort -u
 ```
 
 ## End-to-end sketches
@@ -193,8 +197,8 @@ social linkedin comments "$POST" --limit 100 --sort-by MOST_RELEVANT \
 social linkedin reactions "$POST" --limit 100 --offset 0 > /tmp/reactions-1.json
 social linkedin reactions "$POST" --limit 100 --offset 100 > /tmp/reactions-2.json
 
-jq -r '.items[] | {id, text, author: .author.name, reactions: .reactions_counter}' /tmp/comments.json
-jq -r '.items[] | {type: .value, name: .sender.name}' /tmp/reactions-1.json
+jq -r '.items[] | {id, text, author: .author.display_name, reactions: .reactions_counter}' /tmp/comments.json
+jq -r '.items[] | {type: .value, name: .sender.display_name}' /tmp/reactions-1.json
 ```
 
 ### Billing audit

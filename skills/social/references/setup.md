@@ -62,18 +62,18 @@ social account connect linkedin    # LinkedIn browser connection
 social account connect x           # X OAuth handshake
 ```
 
-The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls until the connection appears in bare `social account`, then prints the connected handle. LinkedIn connect/reconnect times out after 2 minutes; X connect/reconnect times out after 5 minutes. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls until the connection appears in bare `social account`, then prints the connected username. LinkedIn connect/reconnect times out after 2 minutes; X connect/reconnect times out after 5 minutes. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
 
 To swap accounts:
 
 ```bash
 social account
-social account disconnect linkedin <@handle|profile_id:<id>>
-social account reconnect linkedin <@handle|profile_id:<id>>
+social account disconnect linkedin <@username|profile_id:<id>>
+social account reconnect linkedin <@username|profile_id:<id>>
 
 social account
-social account disconnect x <@handle|profile_id:<id>>
-social account reconnect x <@handle|profile_id:<id>>
+social account disconnect x <@username|profile_id:<id>>
+social account reconnect x <@username|profile_id:<id>>
 ```
 
 ## Scopes
@@ -94,7 +94,7 @@ Choose Read + Write in the login prompt.
 
 ## Per-call account selection
 
-Every command accepts `--account <@handle|profile_id:<id>>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against bare `social account`.
+Every command accepts `--account <@username|profile_id:<id>>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against bare `social account`.
 
 ## Caching
 
@@ -111,9 +111,9 @@ social account config cache ttl {total_in_seconds}
 Use command-level cache headers only when command help lists `--header`:
 
 ```bash
-social linkedin profile @handle -H "Cache-Control: no-cache"   # bypass cache read, refresh cache
-social linkedin profile @handle -H "Cache-Control: no-store"   # bypass cache read and write
-social linkedin profile @handle -H "Cache-Control: max-age=60" # override TTL for this request
+social linkedin profile @username -H "Cache-Control: no-cache"   # bypass cache read, refresh cache
+social linkedin profile @username -H "Cache-Control: no-store"   # bypass cache read and write
+social linkedin profile @username -H "Cache-Control: max-age=60" # override TTL for this request
 ```
 
 `Cache-Control` is the functional request cache surface. Cached responses may
@@ -148,22 +148,30 @@ for the user to act on.
 Exit codes are typed: `2` means fix command usage, flags, IDs, JSON body, or
 local input. Server-side API/proxy failures exit `5`. `3` means not found, `4`
 means login/scope/auth, and `7` means rate limited. LinkedIn proxy requests
-retry automatically, honoring `Retry-After` first and then exponential fallback;
-for other `7` errors, JSON may include `retryAfterSeconds`.
+retry short waits automatically, honoring `Retry-After` first and then
+exponential fallback; when the wait exceeds the in-process budget (60 seconds,
+or `--timeout <seconds>` on sync) the command exits `7` immediately instead of
+sleeping. JSON may include `retryAfterSeconds`. Sync rate-limit errors may also
+include `resumeAt`, `retryCommand`, `hint`, and `syncResume`. When
+`syncResume.cursorPersisted` is true, re-run `retryCommand` after `resumeAt`;
+already-synced pages are saved and the sync resumes from the saved cursor. To
+size a rate-limit window, `social account logs --platform <platform> --limit 20`
+shows recent upstream calls with status and credits — a run of `429`s marks the
+window.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account login`.                                                  |
 | `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account login` and choose Read + Write. |
 | `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`.         |
-| `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed handle/id.                           |
+| `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed username/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
-| `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries automatically; otherwise back off per the retry hint. X quotas are tight on free tiers. |
+| `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
 | `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
 | `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
-| `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the handle/id.                                                       |
+| `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the username/id.                                                       |
 
 ## Troubleshooting
 

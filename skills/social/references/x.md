@@ -17,7 +17,7 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `profile [target]` | `--user-fields`, `--tweet-fields`, `--expansions`, `--account` | Authenticated profile by default. Target accepts `@handle`, profile URL, or `profile_id:<id>`. |
+| `profile [target]` | `--user-fields`, `--tweet-fields`, `--expansions`, `--account` | Authenticated profile by default. Target accepts `@username`, profile URL, or `profile_id:<id>`. |
 | `tweets <target>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, field flags, `--account`, `-H/--header` | Live, metered, target required. |
 | `liked [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts a user liked; omit target for the selected account. |
 | `mentions [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts mentioning a user; omit target for the selected account. |
@@ -46,7 +46,7 @@ Confirm with the user before every write.
 | Command | Args | Notes |
 | --- | --- | --- |
 | `post` | body from stdin | Public post. |
-| `message <recipients>` | body from stdin | DM to chat URL, `chat_id:<id>`, `@handle`, profile URL, or `profile_id:<id>`; comma-separate profile targets for a group. |
+| `message <recipients>` | body from stdin | DM to chat URL, `chat_id:<id>`, `@username`, profile URL, or `profile_id:<id>`; comma-separate profile targets for a group. |
 | `like <target>` / `unlike <target>` | `--account` | Like or unlike a post. |
 | `repost <target>` / `unrepost <target>` | `--account` | Repost or undo repost. |
 | `bookmark <target>` / `unbookmark <target>` | `--account` | Add or remove a saved post. |
@@ -60,11 +60,13 @@ Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `messages
 ```bash
 social x sync
 social x sync messages
-social x sync tweets --since 7:days
+social x sync tweets --since 2026-05-04 --timeout 900
 social x sql
 ```
 
-`--since` limits a sync to newer items — an ISO date/datetime or a compact duration like `2:days`, `3:weeks`, `5:hours` — on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+`--timeout <seconds>` is accepted for sync command parity and validates as a positive integer. X does not add in-process rate-limit retries; on a sync 429, use the JSON `resumeAt`, `retryCommand`, `hint`, and `syncResume` fields when present.
 
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
@@ -76,6 +78,8 @@ No synced x_messages yet — run `social x sync messages` first.
 
 `x_messages` is a view. It includes `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
 
+Two triage caveats: `text` is `null` on attachment-only DMs — not an error; the message carried media, check `attachments`. And `sender_*` describes each message's sender, so a group thread surfaces as whoever spoke last — aggregate per `conversation_id` to see who is in it (recipe below).
+
 ### Recipes
 
 ```bash
@@ -85,7 +89,11 @@ social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch'
   | jq '.items[]'
 
 # Conversation with one person; the view resolves sender_username.
-social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE sender_username = 'handle' OR conversation_id = (SELECT conversation_id FROM x_messages WHERE sender_username = 'handle' LIMIT 1) ORDER BY created_at ASC" \
+social x sql "SELECT sender_username, text, datetime(created_at/1000,'unixepoch') AS at FROM x_messages WHERE sender_username = 'username' OR conversation_id = (SELECT conversation_id FROM x_messages WHERE sender_username = 'username' LIMIT 1) ORDER BY created_at ASC" \
+  | jq '.items[]'
+
+# Who is in each thread; >1 sender means a group chat.
+social x sql "SELECT conversation_id, COUNT(DISTINCT sender_username) AS senders, GROUP_CONCAT(DISTINCT sender_username) AS participants, datetime(MAX(created_at)/1000,'unixepoch') AS last_at FROM x_messages GROUP BY conversation_id ORDER BY MAX(created_at) DESC LIMIT 20" \
   | jq '.items[]'
 
 # Top synced followers.
@@ -146,7 +154,7 @@ jq '{cost: .meta.cost, cursor: .meta.cursor, resolved: .meta.resolved}'
 Save live outputs before chaining so you do not re-bill:
 
 ```bash
-social x tweets @handle --limit 100 > /tmp/tweets.json
+social x tweets @username --limit 100 > /tmp/tweets.json
 jq '.items | length' /tmp/tweets.json
 jq '.meta.cursor // empty' /tmp/tweets.json
 ```
@@ -161,7 +169,7 @@ For your own account, prefer the free path: `social x sync tweets`, then the `x_
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 
-social x tweets @handle \
+social x tweets @username \
   --limit 100 \
   --start-time "$SINCE" \
   --exclude replies,retweets \

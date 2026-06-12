@@ -17,11 +17,11 @@ All freeform text for posts, comments, messages, message edits, and connection
 request notes is sent via stdin. Do not pass text as a positional argument:
 
 ```sh
-echo "Thanks for the note." | social x message @handle
-echo "Thanks for the note." | social linkedin message @handle
+echo "Thanks for the note." | social x message @username
+echo "Thanks for the note." | social linkedin message @username
 ```
 
-Targets, typed IDs, URLs, and handles still go on argv. Pipe a JSON object via
+Targets, typed IDs, URLs, and usernames still go on argv. Pipe a JSON object via
 stdin for advanced structured payloads.
 
 Feedback reports are stdin-only too:
