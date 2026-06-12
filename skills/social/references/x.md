@@ -60,11 +60,14 @@ Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `messages
 ```bash
 social x sync
 social x sync messages
+social x sync messages --since 2026-06-01
 social x sync tweets --since 2026-05-04 --timeout 900
 social x sql
 ```
 
-`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `stoppedReason: "checkpoint"` with a note means caught up: no new events since the last sync checkpoint. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+Just-sent DMs are inserted into `x_messages` by the send command when messages has synced at least once. The send response's `dm_event_id` is `x_messages.id`; `dm_conversation_id` is `x_messages.conversation_id`. Upstream `/dm_events` can lag a few minutes after a send; never `--reset` to verify a send. `--reset` re-pulls and re-bills the full collection history.
 
 `--timeout <seconds>` is accepted for sync command parity and validates as a positive integer. X does not add in-process rate-limit retries; on a sync 429, use the JSON `resumeAt`, `retryCommand`, `hint`, and `syncResume` fields when present.
 
@@ -78,7 +81,7 @@ Never-synced tables fail with the sync command:
 No synced x_messages yet — run `social x sync messages` first.
 ```
 
-`x_messages` is a view. It includes `conversation_type` (`1to1` or `group`), `has_attachments` (0/1), `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. For `1to1` rows it also includes `counterpart_id`, `counterpart_username`, `counterpart_name`, `counterpart_avatar_url`, and `counterpart_headline` for the other participant; counterpart columns are `null` on group rows. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
+`x_messages` is a view. It includes `conversation_type` (`1to1` or `group`), `has_attachments` (0/1), `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. For `1to1` rows it also includes `counterpart_id`, `counterpart_username`, `counterpart_name`, `counterpart_avatar_url`, and `counterpart_headline` for the other participant; `counterpart_username` is always the other participant, so on your outbound rows it is the recipient. Counterpart columns are `null` on group rows. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
 
 `x_conversation_participants` is a derived view with `conversation_id`, `participant_id`, `participant_username`, `participant_name`, and `participant_avatar_url`. It uses observed senders, dash-form 1:1 conversation IDs, and `ParticipantsJoin`/`ParticipantsLeave` `participant_ids`.
 

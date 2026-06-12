@@ -67,7 +67,7 @@ Confirm with the user before every write.
 | `requests send <profile>` | optional note from stdin | Send a connection request. |
 | `requests accept request_id:<id>` | `--account` | Accept a received request. Use SQL to inspect request IDs first. |
 | `requests cancel request_id:<id>` | `--account` | Cancel a sent request or refuse a received request. |
-| `message <target>` | body from stdin | Send a message to a person or conversation. |
+| `message <target>` | body from stdin | Send a message to a person or conversation. Target accepts a person selector or `chat_id:<id>`. |
 | `message <target> delete message_id:<id>` | `--account` | Delete one of your own messages. |
 | `message <target> edit message_id:<id>` | new text from stdin | Edit one of your own messages. |
 | `messages <target> mark read\|unread` | `--account` | Mark a conversation read or unread. Target is `chat_id:<id>` or a messaging-thread URL. |
@@ -86,6 +86,8 @@ social linkedin sql
 ```
 
 `--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+
+Successful write commands update synced collections immediately: `requests cancel` and `requests accept` prune the matching `li_requests` row, and `message` inserts the sent row into `li_messages` once messages has synced at least once.
 
 `--timeout <seconds>` is a positive integer wait budget. LinkedIn sync may sleep and retry rate limits while the next wait fits the remaining budget; without it, long waits exit early. Rate-limit JSON can include `resumeAt`, `retryCommand`, `hint`, and `syncResume`; when `syncResume.cursorPersisted` is true, re-run `retryCommand` to resume from the saved cursor.
 
@@ -117,6 +119,10 @@ social linkedin sync requests
 social linkedin sql "SELECT user_name, user_username, datetime(created_at/1000,'unixepoch') AS at FROM li_requests WHERE type='received' ORDER BY created_at DESC LIMIT 50" \
   | jq '.items[]'
 
+# Sent invitations are sparse: upstream omits username/headline/profile URL.
+social linkedin sql "SELECT user_name, user_username, user_headline FROM li_requests WHERE type='sent' ORDER BY created_at DESC LIMIT 50" \
+  | jq '.items[]'
+
 # Invitation notes.
 social linkedin sql "SELECT user_name, message FROM li_requests WHERE type = 'received' AND message IS NOT NULL ORDER BY created_at DESC" \
   | jq '.items[]'
@@ -139,6 +145,8 @@ social linkedin sql "SELECT text, share_url, comments_counter, reposts_counter, 
 ```
 
 Timestamps are epoch millis. Use `datetime(col/1000,'unixepoch')` in SQLite.
+
+For sent invitation rows, `user_name` is the useful sparse label; `user_username`, `user_headline`, and `user_profile_url` are `NULL` because upstream omits them. Do not budget per-candidate profile lookups expecting those columns to be populated.
 
 ## Example live reads
 
