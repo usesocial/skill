@@ -10,7 +10,9 @@ Run the hosted setup command in an interactive terminal:
 curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-It prefers Bun, then falls back to npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social account login`. The package publishes the `social` binary (ESM, Node 24). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+It prefers Bun, then falls back to npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social account login`. The package publishes the `social` binary (ESM, Node >= 22.5). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+
+Homebrew is also supported: `brew install usesocial/tap/cli` installs the same binary (skill and login are then manual).
 
 ## Staying current
 
@@ -22,6 +24,7 @@ Update the CLI with the package manager the user actually used:
 | ------------- | ----------------------------------- |
 | Bun           | `bun add -g @usesocial/cli@latest`  |
 | npm           | `npm install -g @usesocial/cli@latest` |
+| Homebrew      | `brew upgrade usesocial/tap/cli`    |
 
 Do **not** infer the manager by resolving `which social` symlinks — it is brittle across `~/.bun/bin` and npm prefixes. Updating the CLI mid-session is safe: each call is a fresh process, so the new binary takes effect on the next command.
 
