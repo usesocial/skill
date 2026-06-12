@@ -105,14 +105,6 @@ The default cache TTL is 15 minutes. Configure the local default in seconds:
 social account config cache ttl {total_in_seconds}
 ```
 
-Useful presets:
-
-```bash
-social account config cache mode live         # 15 minutes, default
-social account config cache mode analytical   # 24 hours
-social account config cache mode historical   # 1 week
-```
-
 Use command-level cache headers only when command help lists `--header`:
 
 ```bash

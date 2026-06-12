@@ -138,10 +138,6 @@ Named read commands call the live network and spend credits. Examples: `profile`
 Live reads may use the proxy cache. Cache hits are free; fresh upstream calls are metered. Cache config is independent from the local mirror:
 
 ```bash
-social account config cache mode
-social account config cache mode live
-social account config cache mode analytical
-social account config cache mode historical
 social account config cache ttl 3600
 social linkedin profile @handle -H "Cache-Control: no-cache"
 social linkedin profile @handle -H "Cache-Control: no-store"
