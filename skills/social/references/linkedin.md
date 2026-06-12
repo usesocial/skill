@@ -2,7 +2,7 @@
 
 Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend credits, writes act.
 
-`social linkedin <command>`. Most live LinkedIn list reads use `--limit` and `--offset`; `connections` uses `--limit` and `--cursor` from `.meta.cursor`. Totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
+`social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
 
 ## Account lifecycle
 
@@ -18,7 +18,7 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | Command | Args | Notes |
 | --- | --- | --- |
 | `profile [target]` | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header` | Connected profile by default. Target accepts `@public-identifier`, profile URL, profile URN, or `profile_id:<id>`. |
-| `posts <target>` | `--limit`, `--offset`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company handle, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
+| `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company handle, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
 | `comments <post>` | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--comment-id <id>`, `--account`, `-H/--header` | Comments on a post; `--comment-id` fetches replies to one comment. |
 | `reactions <post>` | `--limit 1-100`, `--offset`, `--comment-id <id>`, `--account`, `-H/--header` | Reactions on a post or comment. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
@@ -44,6 +44,13 @@ Search is live, metered, offset-paginated, and visible in help/schema.
 social linkedin search posts "agent CLI" --limit 25 --offset 0 \
   | jq '.items[] | {id, text: .text[0:120], url}'
 social linkedin search people "devtools founder" --limit 25 --offset 0
+```
+
+People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
+
+```bash
+social linkedin search people "devtools founder" --limit 100 --offset 0 \
+  | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {display_name, headline, network_distance, followers_count}'
 ```
 
 ## Writes
@@ -76,6 +83,8 @@ social linkedin sql
 ```
 
 Bare `sql` prints schema, row counts, and freshness. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
+
+`sync_state.object_count` is the most recent run's fetched objects; a checkpoint-stop run reports `0`. Use `SELECT count(*)` for table totals.
 
 Never-synced tables fail with the sync command:
 
@@ -118,8 +127,9 @@ social linkedin profile
 social linkedin search posts "agent CLI" --limit 25 --offset 0
 
 # Profile/company posts.
-social linkedin posts profile_id:<profile-id> --limit 20 --offset 0
-social linkedin posts company_id:<company-id> --limit 20 --offset 0
+PAGE1=$(social linkedin posts profile_id:<profile-id> --limit 20)
+NEXT=$(echo "$PAGE1" | jq -r '.meta.cursor // empty')
+[ -n "$NEXT" ] && social linkedin posts profile_id:<profile-id> --limit 20 --cursor "$NEXT"
 
 # Drill into a post's reactions.
 social linkedin reactions post_id:<post-id> --limit 100 --offset 0 \
@@ -146,7 +156,7 @@ jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
 jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
 
 # Inspect billing and paging metadata.
-jq '{cost: .meta.cost, totalCount: .meta.totalCount, resolved: .meta.resolved}'
+jq '{cost: .meta.cost, cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolved}'
 ```
 
 Save live outputs before chaining so you do not re-bill:
@@ -181,5 +191,6 @@ social account usage
 
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-social account logs --platform linkedin --from "$SINCE" --limit 100 | jq
+social account logs --platform linkedin --from "$SINCE" --limit 100 \
+  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .credits] | @tsv'
 ```

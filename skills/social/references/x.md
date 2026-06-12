@@ -86,10 +86,12 @@ social x sql "SELECT sender_handle, text, datetime(created_at/1000,'unixepoch') 
   | jq '.items[]'
 
 # Top synced followers.
+social x sync followers
 social x sql "SELECT username, name, followers_count FROM x_followers ORDER BY followers_count DESC LIMIT 100" \
   | jq '.items[]'
 
 # Saved-post export.
+social x sync bookmarks
 social x sql "SELECT text, url FROM x_bookmarks ORDER BY created_at DESC LIMIT 1000" \
   | jq '.items[]'
 ```
@@ -176,5 +178,6 @@ social account usage
 
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
-social account logs --platform x --from "$SINCE" --limit 100 | jq
+social account logs --platform x --from "$SINCE" --limit 100 \
+  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .credits] | @tsv'
 ```

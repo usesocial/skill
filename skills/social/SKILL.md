@@ -59,7 +59,7 @@ Full setup detail lives in `references/setup.md`.
 ## Invocation conventions
 
 - Output is compact JSON.
-- Successful commands use one envelope: `{ account, items | data, meta }`.
+- Platform reads return `{ account, items | data, meta }`; `social account` service commands (`account`, `usage`, `billing`, `logs`) return bare JSON, with `logs` returning `{ items, meta: { cursor } }`.
 - List results are `.items[]`.
 - Single resources and schema-style objects are `.data`.
 - Errors are JSON on stderr.
@@ -155,7 +155,7 @@ Use `-H` only when help/schema lists `header`.
 | Surface | Pagination | Notes |
 | --- | --- | --- |
 | X live lists | `--limit`, `--cursor` from `.meta.cursor` | Cursor may be absent on the last page. |
-| LinkedIn live lists | Most use `--limit`, `--offset`; `connections` uses `--limit`, `--cursor` from `.meta.cursor` | Increase offset by page size; continue connections from cursor. |
+| LinkedIn live lists | `posts` and `connections` use `--limit`, `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit`, `--offset` | Continue cursor reads from cursor; increase offset by page size. |
 | SQL | none | Use SQL `LIMIT`, `ORDER BY`, and `WHERE`. |
 
 Cap loops before running them. Save large responses to temp files and project with `jq`.
