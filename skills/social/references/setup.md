@@ -45,7 +45,38 @@ social --help
 
 ## `social account login`
 
-`account login` runs the better-auth **device-authorization** flow. It is fully interactive: choose Read or Read + Write, enter email, enter phone number, click the emailed magic link, approve the browser request, and confirm billing checkout if a seat is needed. The CLI sends the magic link with the device approval screen attached while the phone prompt is active, then polls until the web session approves the request. **Do not background it; do not pipe `yes` into it; do not run it from an agent-mediated setup flow.** Ask the user to run it directly in an interactive terminal.
+`account login` runs the better-auth **device-authorization** flow. Its behavior
+depends on the shell:
+
+**Interactive terminal.** Fully guided: choose Read or Read + Write, enter email
+and phone, click the emailed magic link, approve the browser request, and confirm
+billing checkout if a seat is needed. The CLI sends the magic link with the
+device approval screen attached, then blocks until the web session approves. Ask
+the user to run it directly; do not pipe `yes` into it.
+
+**Agent / non-TTY shell.** A non-blocking **state machine** that advances one step
+per call - a skill can poll it. It never prompts and never blocks waiting for the
+human. The states (read `.status`, not the exit code):
+
+| `.status`           | Meaning                                            | Next step |
+| ------------------- | -------------------------------------------------- | --------- |
+| `pending_approval`  | Device flow started; awaiting browser approval.    | Surface `verificationURL` to the user; call `login` again to poll. |
+| `logged_in`         | Approved; credentials stored.                      | Continue to connect. |
+| `already_logged_in` | A valid session already exists.                    | Continue. |
+| `expired`           | The device code lapsed before approval (exit `4`). | Re-run `login` to issue a fresh code. |
+| `error`             | Surface `.message`; stop.                          | |
+
+The first call returns `pending_approval` with `verificationURL`, `userCode`,
+`expiresAt`, and `scope`. The human opens `verificationURL`, where the browser
+collects their email and approves the session - the CLI never asks the agent for
+an email, phone, magic link, or bearer. Default scope is `read,write`; pass
+`--scope read` for read-only. The in-flight device code is persisted to
+`~/.social/device-login.json` (mode `0600`) between calls and removed once the
+flow resolves. Phone capture is interactive-only and best-effort. Billing-seat
+acquisition is a separate concern (surfaced by `social account` seats), not part
+of the non-TTY login states. **Do not background `login`, pipe `yes` into it, or
+poll it without a cap.** The full onboarding walk-through is in
+`references/get-started.md`.
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social account logout` clears both.
 
@@ -62,7 +93,27 @@ social account connect linkedin    # LinkedIn browser connection
 social account connect x           # X OAuth handshake
 ```
 
-The CLI opens the browser when run from an interactive terminal. In an agent/non-TTY run, it prints the connection URL to stderr so the user can open it themselves. It polls until the connection appears in bare `social account`, then prints the connected username. LinkedIn connect/reconnect times out after 2 minutes; X connect/reconnect times out after 5 minutes. For X, the bearer is requested with full scopes; the bearer-session `cliGrant` decides usage scope at request time.
+Like login, connect's behavior depends on the shell:
+
+**Interactive terminal.** Opens the browser, polls until the connection appears in
+bare `social account`, then prints the connected username. LinkedIn
+connect/reconnect times out after 2 minutes; X connect/reconnect after 5 minutes.
+
+**Agent / non-TTY shell.** A non-blocking **state machine** mirroring login - one
+step per call, no waiting:
+
+| `.status`          | Meaning                              | Next step |
+| ------------------ | ------------------------------------ | --------- |
+| `pending_approval` | No account linked yet.               | Surface `connectURL`; call `connect` again to poll. |
+| `connected`        | Account is linked (`.account`).      | Done. |
+
+The first call returns `{ status: "pending_approval", platform, connectURL }` and
+prints `Opening <url>`; surface `connectURL` to the user, have them approve in the
+browser, then call `connect` again. Once the account appears it returns
+`{ status: "connected", platform, account }`. Bare `social account` also shows the
+connected-account row. `reconnect` remains the interactive blocking flow. For X,
+the bearer is requested with full scopes; the bearer-session `cliGrant` decides
+usage scope at request time.
 
 To swap accounts:
 
