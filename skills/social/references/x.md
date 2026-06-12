@@ -21,8 +21,10 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | `tweets <target>` | `--limit 5-100`, `--cursor`, `--since-id`, `--until-id`, `--start-time`, `--end-time`, `--exclude replies\|retweets`, field flags, `--account`, `-H/--header` | Live, metered, target required. |
 | `liked [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts a user liked; omit target for the selected account. |
 | `mentions [target]` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Posts mentioning a user; omit target for the selected account. |
+| `followers [target]` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | A user's followers, live and metered; omit target for the selected account. |
+| `following [target]` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | Accounts a user follows, live and metered; omit target for the selected account. |
 
-Fresh or someone else's graph: use live graph commands from the X subtree (`followers [target]`, `following [target]`). Your own graph for free: sync, then query `x_followers` or `x_following` with SQL.
+Fresh data or someone else's graph: the live `followers`/`following` commands above. Your own graph for free: sync, then query `x_followers` or `x_following` with SQL.
 
 ## Tweets and engagement
 

@@ -23,8 +23,9 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | `reactions <post>` | `--limit 1-100`, `--offset`, `--comment-id <id>`, `--account`, `-H/--header` | Reactions on a post or comment. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
 | `jobs <company>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Job postings for a company. |
+| `connections [target]` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live and metered; omit target for the selected account. |
 
-Fresh or someone else's graph: use the live `connections [target]` command. Your own graph for free: sync, then query `li_connections` with SQL.
+Fresh data or someone else's graph: the live `connections` command above. Your own graph for free: sync, then query `li_connections` with SQL.
 
 `<post>` accepts the numeric ID, `post_id:<id>`, `urn:li:ugcPost:<id>`, `urn:li:share:<id>`, an activity URL, or the `social_id` returned in a post payload.
 
