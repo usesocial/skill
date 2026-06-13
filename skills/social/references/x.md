@@ -57,6 +57,10 @@ Confirm with the user before every write.
 
 Syncable collections: `tweets`, `followers`, `following`, `bookmarks`, `liked`, `mentions`, `messages`.
 
+If the user already has a complete downloaded X followers export and wants to
+avoid a paid first sync, load `references/import.md` and seed the local SQLite
+mirror instead of running `social x sync followers`.
+
 ```bash
 social x sync
 social x sync messages

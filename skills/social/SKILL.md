@@ -143,6 +143,9 @@ Views expose curated columns and omit `raw`/`synced_at`. Each view has a `<table
 
 There is no TTL auto-refresh on reads. Run `sync` when you want newer local data. Freshness is visible in `sync` status and `meta.cache.tables`.
 
+When the user already has a complete local export and wants to avoid a paid first
+sync, load `references/import.md` for the local SQLite import recipe.
+
 ## Live reads and cache
 
 Named read commands call the live network and spend credits. Examples: `profile`, `timeline`, `liked <target>`, `mentions <target>`, `followers <target>`, `following <target>`, `likers`, `quotes`, `replies`, `reposters`, `tweet`, `tweets <target>`, LinkedIn `posts <target>`, `comments`, `reactions`, `company`, `jobs`, `connections <target>`, and `search`.
@@ -266,5 +269,6 @@ Commands with no `hazard` (reads, billing portal, SQL) need no confirmation.
 
 - `references/get-started.md` - guided onboarding (install → login → connect → first sync) and the skill-owns-consent pattern.
 - `references/setup.md` - install, login, connect, scopes/billing, cache, errors, troubleshooting.
+- `references/import.md` - local SQLite imports for complete already-downloaded exports.
 - `references/linkedin.md` - LinkedIn command catalog and recipes.
 - `references/x.md` - X command catalog and recipes.
