@@ -81,11 +81,8 @@ Likes are inserted into `x_liked` by `social x like <target>` and removed by `so
 
 Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
 
-Never-synced tables fail with the sync command:
-
-```text
-No synced x_messages yet — run `social x sync messages` first.
-```
+SQL reads whatever is already in the local mirror. Empty results are valid local truth; use
+`rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
 
 `x_messages` is a view. It includes `conversation_type` (`1to1` or `group`), `has_attachments` (0/1), `sender_username`, `sender_name`, `sender_avatar_url`, and `sender_headline` from `x_profiles`. For `1to1` rows it also includes `counterpart_id`, `counterpart_username`, `counterpart_name`, `counterpart_avatar_url`, and `counterpart_headline` for the other participant; `counterpart_username` is always the other participant, so on your outbound rows it is the recipient. Counterpart columns are `null` on group rows. `x_profiles.receives_your_dm` is `1` for profiles that accept your DMs — useful before drafting outreach.
 

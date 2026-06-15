@@ -115,7 +115,7 @@ social x sql "SELECT sender_username, text FROM x_messages ORDER BY created_at D
 social linkedin sql "SELECT sender_name, text FROM li_messages ORDER BY created_at DESC LIMIT 20"
 ```
 
-Bare `sql` prints compact JSON under `.data`: `path`, `notes`, `joins`, `enums`, and `tables[]` with `name`, `rows`, `synced_at`, `query_ready`, `columns`, and `indexed`. Query results are enveloped as `.items[]`.
+Bare `sql` prints compact JSON under `.data`: `path`, `notes`, `joins`, `enums`, and `tables[]` with `name`, `rows`, `synced_at`, `columns`, and `indexed`. Query results are enveloped as `.items[]`.
 
 Local SQL metadata:
 
@@ -132,12 +132,8 @@ Local SQL metadata:
 }
 ```
 
-Never-synced tables fail loudly. The exact form is:
-
-```text
-No synced x_messages yet — run `social x sync messages` first.
-No synced li_requests yet — run `social linkedin sync requests` first.
-```
+SQL reads whatever is already in the local mirror. Empty results are valid local truth; use
+`rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
 
 Views expose curated columns and omit `raw`/`synced_at`. Each view has a `<table>_raw` twin with all upstream columns plus `raw` and `synced_at`; query upstream JSON with `json_extract(raw, '$.field')`. X raw JSON is flat; LinkedIn raw JSON nests the person under `.user`.
 

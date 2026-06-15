@@ -97,12 +97,8 @@ Bare `sql` prints compact schema metadata under `.data`. Query output is `{ acco
 
 `sync_state.object_count` backs `objectCount`; use `totalRows` or `SELECT count(*)` for table totals.
 
-Never-synced tables fail with the sync command:
-
-```text
-No synced li_messages yet — run `social linkedin sync messages` first.
-No synced li_requests yet — run `social linkedin sync requests` first.
-```
+SQL reads whatever is already in the local mirror. Empty results are valid local truth; use
+`rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
 
 `li_messages` stores flat `sender_*` columns. `li_conversations` is synced as the parent of messages; query it when you need unread counts, `last_message_at`, `type`, or chat-level metadata.
 
