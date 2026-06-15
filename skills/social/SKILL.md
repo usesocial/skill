@@ -148,7 +148,7 @@ sync, load `references/import.md` for the local SQLite import recipe.
 
 ## Live reads and cache
 
-Named read commands call the live network and spend credits. Examples: `profile`, `timeline`, `liked <target>`, `mentions <target>`, `followers <target>`, `following <target>`, `likers`, `quotes`, `replies`, `reposters`, `tweet`, `tweets <target>`, LinkedIn `posts <target>`, `comments`, `reactions`, `company`, `jobs`, `connections <target>`, and `search`.
+Named read commands call the live network and spend credits. Examples: `profile`, `liked <target>`, `mentions <target>`, `followers <target>`, `following <target>`, `likers`, `quotes`, `replies`, `reposters`, `tweet`, `tweets <target>`, LinkedIn `posts <target>`, `comments`, `reactions`, `company`, `jobs`, `connections <target>`, and `search`.
 
 Live reads may use the proxy cache. Cache hits are free; fresh upstream calls are metered. Cache config is independent from the local mirror:
 

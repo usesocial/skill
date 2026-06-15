@@ -24,20 +24,19 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | `followers <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | A user's followers, live and metered; target required. For your own graph, run `social x sync followers`, then query `x_followers` with SQL. |
 | `following <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | Accounts a user follows, live and metered; target required. For your own graph, run `social x sync following`, then query `x_following` with SQL. |
 
-Live reads are for fresh data or someone else's graph. Your own graph and posts are sync+sql: `social x sync followers|following|tweets|liked|mentions`, then query `x_followers`, `x_following`, `x_tweets`, `x_liked`, or `x_mentions`.
+Live reads are for fresh data or someone else's graph. Your own graph, posts, and home timeline are sync+sql: `social x sync followers|following|tweets|timeline|liked|mentions`, then query `x_followers`, `x_following`, `x_tweets`, `x_timeline`, `x_liked`, or `x_mentions`.
 
 ## Tweets and engagement
 
 | Command | Args | Notes |
 | --- | --- | --- |
 | `tweet <target>` | field flags, `--account`, `-H/--header` | Single post by `post_id:<id>` or URL. |
-| `timeline` | `--limit 1-100`, `--cursor`, time/id bounds, field flags, `--account` | Home timeline. |
 | `replies <target>` | `--limit 10-100`, `--cursor`, field flags, `--account` | Replies to `post_id:<id>`, `conversation_id:<id>`, or a post URL. |
 | `quotes <target>` | `--limit`, `--cursor`, field flags, `--account`, `-H/--header` | Quote posts of a post. |
 | `likers <target>` | `--limit`, `--cursor`, `--user-fields`, `--account`, `-H/--header` | Users who liked a post. |
 | `reposters <target>` | `--limit`, `--cursor`, `--user-fields`, `--account`, `-H/--header` | Users who reposted a post. |
 
-Field flags extend default comma-separated presets and de-dupe repeated fields. Timeline, liked, mentions, quotes, replies, tweet, and tweets use safe tweet/user/media/poll/place defaults. When the response includes expansion users, the CLI joins them into each post's `.author`; if a post still has only `author_id`, budget a `profile profile_id:<id>` follow-up when the author name matters.
+Field flags extend default comma-separated presets and de-dupe repeated fields. Liked, mentions, quotes, replies, tweet, and tweets use safe tweet/user/media/poll/place defaults. When the response includes expansion users, the CLI joins them into each post's `.author`; if a post still has only `author_id`, budget a `profile profile_id:<id>` follow-up when the author name matters.
 
 ## Writes
 
@@ -65,6 +64,7 @@ mirror instead of running `social x sync followers`.
 social x sync
 social x sync messages
 social x sync messages --since 2026-06-01
+social x sync timeline --since 2026-05-04
 social x sync tweets --since 2026-05-04 --timeout 900
 social x sql
 ```
@@ -129,6 +129,11 @@ social x sync mentions
 social x sql "SELECT text, url, author_id, like_count, retweet_count, reply_count FROM x_mentions ORDER BY created_at DESC LIMIT 100" \
   | jq '.items[]'
 
+# Home timeline, free after sync.
+social x sync timeline
+social x sql "SELECT t.text, t.url, p.username AS author_username, datetime(t.created_at/1000,'unixepoch') AS at FROM x_timeline t LEFT JOIN x_profiles p ON p.provider_id = t.author_id ORDER BY t.created_at DESC LIMIT 100" \
+  | jq '.items[]'
+
 # Own-content audit, free after sync. Metric columns are flat:
 # like_count, retweet_count, reply_count, quote_count, bookmark_count, impression_count.
 # On old tweets, impression_count can be 0 when upstream no longer reports impressions;
@@ -143,19 +148,11 @@ Timestamps are epoch millis. Use `datetime(col/1000,'unixepoch')` in SQLite.
 ## Example live reads
 
 ```bash
-# Home timeline, excluding replies.
-social x timeline --limit 25 --exclude replies
-
 # A user's recent posts.
 social x tweets profile_id:<profile-id> --limit 30 --exclude retweets
 
 # Fetch by ID.
 social x tweet post_id:<post-id>
-
-# Paginate a live cursor read.
-PAGE1=$(social x timeline --limit 100)
-NEXT=$(echo "$PAGE1" | jq -r '.meta.cursor // empty')
-[ -n "$NEXT" ] && social x timeline --limit 100 --cursor "$NEXT"
 ```
 
 ## jq recipes
