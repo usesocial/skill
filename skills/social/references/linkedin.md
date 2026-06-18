@@ -1,8 +1,12 @@
 # LinkedIn - `social linkedin`
 
-Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend credits, writes act.
+Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend usage, writes act.
 
 `social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. `page visitors` has no pagination. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
+
+LinkedIn command concurrency is always 1. Run one `social linkedin ...` command
+at a time, including syncs, live reads, company Page reads/writes, messages,
+requests, reactions, comments, posts, and proxy calls.
 
 ## Account lifecycle
 
@@ -134,7 +138,7 @@ social linkedin sync messages --since 2026-05-04 --timeout 900
 social linkedin sql
 ```
 
-`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends less usage. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
 
 Successful write commands update synced collections immediately: `requests cancel` and `requests accept` prune the matching `li_requests` row, and `message` inserts the sent row into `li_messages` once messages has synced at least once.
 
@@ -142,7 +146,7 @@ Successful write commands update synced collections immediately: `requests cance
 
 `sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
-Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.usageUSD` is `0` on every SQL read.
 
 `sync_state.object_count` backs `objectCount`; use `totalRows` or `SELECT count(*)` for table totals.
 
@@ -265,5 +269,5 @@ social account usage
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 social account logs --platform linkedin --from "$SINCE" --limit 100 \
-  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .credits] | @tsv'
+  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .usageUSD] | @tsv'
 ```

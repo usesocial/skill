@@ -209,7 +209,7 @@ include `resumeAt`, `retryCommand`, `hint`, and `syncResume`. When
 `syncResume.cursorPersisted` is true, re-run `retryCommand` after `resumeAt`;
 already-synced pages are saved and the sync resumes from the saved cursor. To
 size a rate-limit window, `social account logs --platform <platform> --limit 20`
-shows recent upstream calls with status and credits — a run of `429`s marks the
+shows recent upstream calls with status and usage — a run of `429`s marks the
 window.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |

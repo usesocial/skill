@@ -1,6 +1,6 @@
 # X - `social x`
 
-Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend credits, writes act.
+Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend usage, writes act.
 
 `social x <command>`. Live X list reads use `--limit` and `--cursor`; the next cursor is `.meta.cursor`. List output is `.items[]`; single-resource output is `.data`.
 
@@ -69,7 +69,7 @@ social x sync tweets --since 2026-05-04 --timeout 900
 social x sql
 ```
 
-`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends fewer credits. `stoppedReason: "checkpoint"` with a note means caught up: no new events since the last sync checkpoint. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends less usage. `stoppedReason: "checkpoint"` with a note means caught up: no new events since the last sync checkpoint. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
 
 Just-sent DMs are inserted into `x_messages` by the send command when messages has synced at least once. The send response's `dm_event_id` is `x_messages.id`; `dm_conversation_id` is `x_messages.conversation_id`. Upstream `/dm_events` can lag a few minutes after a send; never `--reset` to verify a send. `--reset` re-pulls and re-bills the full collection history.
 
@@ -79,7 +79,7 @@ Likes are inserted into `x_liked` by `social x like <target>` and removed by `so
 
 `sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
-Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.credits` is `0` on every SQL read.
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.usageUSD` is `0` on every SQL read.
 
 SQL reads whatever is already in the local mirror. Empty results are valid local truth; use
 `rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
@@ -214,5 +214,5 @@ social account usage
 SINCE=$(date -u -v-30d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
         || date -u -d '30 days ago' +"%Y-%m-%dT%H:%M:%SZ")
 social account logs --platform x --from "$SINCE" --limit 100 \
-  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .credits] | @tsv'
+  | jq -r '.items[] | [.createdAt, .platform, .method, .path, .responseStatus, .cacheStatus, .usageUSD] | @tsv'
 ```

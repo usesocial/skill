@@ -3,11 +3,11 @@
 The guided first-run flow: install check → sign in → connect a platform → first
 sync. This is the home of the **skill-owns-consent** pattern — the CLI never
 prompts and never blocks on approval, so *you* (the agent) estimate cost, state
-it, and get the human's explicit yes before anything that spends credits.
+it, and get the human's explicit yes before anything that spends usage.
 
 Run it when the user says "let's get started with /social", "set me up", "log me
 in", or asks to connect LinkedIn/X for the first time. Each step below is a
-free, non-blocking check; only the final sync spends credits, and only after a
+free, non-blocking check; only the final sync spends usage, and only after a
 confirmed yes.
 
 ## The shape of onboarding
@@ -112,7 +112,7 @@ for the platform.
 
 ## Step 4 — First sync, with the consent pattern
 
-This is the one step that spends credits, so it is the one step that needs an
+This is the one step that spends usage, so it is the one step that needs an
 explicit yes. The pattern is always: **estimate → state → confirm → run →
 verify.**
 
@@ -137,7 +137,7 @@ For LinkedIn use `social schema "linkedin sync"` and `social linkedin profile`
 
 Tell the human, in plain language, what the sync will pull and roughly what it
 will cost — e.g. "Syncing your ~4,200 X followers reads each one upstream and is
-metered in usage credits; that's roughly N credits. Want me to run it?" Be
+metered in usage dollars; that's roughly  usage. Want me to run it?" Be
 honest that it is an estimate; the exact spend appears in `.meta.cost`.
 
 ### 3. Confirm
@@ -153,7 +153,7 @@ social x sync followers      # or the specific collection the user approved
 ```
 
 Where the collection supports it, `--since <ISO date>` pulls only newer items and
-spends fewer credits than a full re-pull.
+spends less usage than a full re-pull.
 
 ### 5. Verify
 
@@ -166,7 +166,7 @@ social account usage
 ```
 
 Report the real cost back to the user, and flag if it crossed a usage threshold
-(25% / 50% / 75% / 100% of included credits).
+(25% / 50% / 75% / 100% of included usage).
 
 ## After onboarding
 
@@ -179,7 +179,7 @@ The user is now set up. Hand off to the platform references for day-to-day work:
 
 The consent pattern from Step 4 applies to every credit-spending or
 account-mutating command, not just the first sync: estimate, state, confirm,
-then act. See the hazard vocabulary in `SKILL.md` — `spends_credits`,
+then act. See the hazard vocabulary in `SKILL.md` — `spends_usage`,
 `destructive`, and `outbound_write` hazards are advisory signals that *you*
 confirm with the human; the CLI itself never gates.
 ```

@@ -132,7 +132,7 @@ social x sql "SELECT username, name, followers_count FROM x_followers ORDER BY f
 
 Expected metadata:
 
-- `meta.cost.credits` is `0`.
+- `meta.cost.usageUSD` is `0`.
 - `meta.cost.metered` is `false`.
 - `meta.cache.source` is `local`.
 
