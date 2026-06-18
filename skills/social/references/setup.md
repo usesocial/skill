@@ -78,7 +78,7 @@ of the non-TTY login states. **Do not background `login`, pipe `yes` into it, or
 poll it without a cap.** The full onboarding walk-through is in
 `references/get-started.md`.
 
-After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). `social account logout` clears both.
+After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). Sessions last two years unless revoked. `social account logout` clears both.
 
 Use bare `social account` to inspect auth state and connected accounts. It always prints compact JSON with `status`, credential namespace/path, verified session data when available, connected account rows, and seat counts when the session is online.
 
