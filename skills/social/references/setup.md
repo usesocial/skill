@@ -134,6 +134,8 @@ The bearer token carries one of:
 - `read` — list/get only.
 - `read,write` — adds POST/PUT/DELETE proxy capabilities.
 
+`read,write` already covers LinkedIn Page invites and raw proxy writes; there is no separate Page scope.
+
 Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
 ```bash

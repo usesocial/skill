@@ -2,7 +2,7 @@
 
 Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend credits, writes act.
 
-`social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
+`social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. `page visitors` has no pagination. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
 
 ## Account lifecycle
 
@@ -54,6 +54,55 @@ Live responses keep upstream field names (`display_name`, `public_identifier`, `
 social linkedin search people "devtools founder" --limit 100 --offset 0 \
   | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {display_name, headline, network_distance, followers_count}'
 ```
+
+## Company Pages
+
+Company Page commands resolve the Page from `--page <company>` or the configured default. `--page` accepts `company_id:<id>`, a company URL, or a vanity; plain numeric IDs are treated as `company_id:<id>`.
+
+Set defaults locally:
+
+```bash
+social account config account @username
+social account config page company_id:<company-id>
+```
+
+| Command | Args | Notes |
+| --- | --- | --- |
+| `page visitors` | `--since <ISO>`, `--until <ISO>`, `--page <company>`, `--account` | Company Page visitor analytics. Live, metered, premium analytics; confirm cost before running. |
+| `page invite <user...>` | `--page <company>`, `--account` | Invite users to follow the selected Page. Targets accept `@username`, `profile_id:<id>`, profile URL, or profile URN. Outbound write; no message body. |
+
+```bash
+social linkedin page visitors --since 2026-05-01T00:00:00Z --until 2026-06-01T00:00:00Z
+social linkedin page invite profile_id:<profile-id> @username --page company_id:<company-id>
+```
+
+## Raw Proxy
+
+`social linkedin proxy` is the raw LinkedIn escape hatch for Voyager calls that have no dedicated command. It forwards a JSON envelope from stdin via Unipile, scoped to the resolved account; never include an `account_id` in the envelope.
+
+Envelope fields: `method`, `url`, `body`, `query_params`, `headers`, and `bypass_url_encoding`.
+
+```bash
+social linkedin proxy < request.json
+```
+
+Example `request.json`:
+
+```json
+{
+  "method": "GET",
+  "url": "/voyager/api/<path>",
+  "query_params": {
+    "q": "value"
+  },
+  "headers": {
+    "Accept": "application/json"
+  },
+  "bypass_url_encoding": false
+}
+```
+
+Treat proxy as `outbound_write` even for read-shaped envelopes. Show the exact method, URL, and high-level body/query intent, then get approval before running.
 
 ## Writes
 
