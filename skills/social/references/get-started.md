@@ -4,11 +4,14 @@ The guided first-run flow: install check → sign in → connect a platform → 
 sync. This is the home of the **skill-owns-consent** pattern — the CLI never
 prompts and never blocks on approval, so *you* (the agent) estimate cost, state
 it, and get the human's explicit yes before anything that spends usage.
+The policy core lives in `SKILL.md`; this reference applies it to first-run
+onboarding.
 
 Run it when the user says "let's get started with /social", "set me up", "log me
-in", or asks to connect LinkedIn/X for the first time. Each step below is a
-free, non-blocking check; only the final sync spends usage, and only after a
-confirmed yes.
+in", or asks to connect LinkedIn/X for the first time. The install/account
+checks, login polling, and connect polling below are free, non-blocking checks.
+Do not run a metered live read while estimating first-sync cost unless you say
+so first and get the human's explicit yes.
 
 ## The shape of onboarding
 
@@ -99,7 +102,6 @@ social account connect linkedin   # or: social account connect x
 | ------------------ | ---------------------------------------- | ----------- |
 | `connected`        | Account is linked.                       | Done; show `.account.username`. |
 | `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; poll again. |
-| `error`            | Surface `.message`.                      | |
 
 A `pending_approval` response carries a `connectURL` — surface it to the human,
 ask them to approve in the browser, then call connect again to advance. When it
@@ -119,26 +121,28 @@ verify.**
 ### 1. Estimate
 
 `sync` cost scales with how many objects it pulls. Read the per-collection rate
-from the schema and the object count from a cheap profile read, then multiply.
+from the schema, then use counts the user or previous local sync/status output
+already gave you. If you do not already know the count, say the estimate is
+rough until the first sync reports the exact spend.
 
 ```bash
 # Rate: what the sync costs and how it is metered.
 social schema "x sync" | jq '.cost'
-
-# Count: the user's own follower/following counts from a profile read.
-social x profile --account <@username> | jq '.data | {followers_count, following_count}'
 ```
 
-For LinkedIn use `social schema "linkedin sync"` and `social linkedin profile`
-(connection count). Bare `social <platform> sync` also lists each collection's
-`objectCount` once something has been synced before.
+For LinkedIn use `social schema "linkedin sync"`. If you need a fresher count
+than the user or local metadata can provide, ask before running a live profile
+lookup. `social x profile --account <@username>` and
+`social linkedin profile --account <@username>` are metered live reads; they can
+improve the estimate, but they are not free setup probes.
 
 ### 2. State the estimate
 
 Tell the human, in plain language, what the sync will pull and roughly what it
 will cost — e.g. "Syncing your ~4,200 X followers reads each one upstream and is
-metered in usage dollars; that's roughly  usage. Want me to run it?" Be
-honest that it is an estimate; the exact spend appears in `.meta.cost`.
+metered in usage dollars; at $0.015/item, that's roughly $63 before cache effects.
+Want me to run it?" Be honest that it is an estimate; the exact spend appears in
+`.meta.cost`.
 
 ### 3. Confirm
 
@@ -182,4 +186,3 @@ account-mutating command, not just the first sync: estimate, state, confirm,
 then act. See the hazard vocabulary in `SKILL.md` — `spends_usage`,
 `destructive`, and `outbound_write` hazards are advisory signals that *you*
 confirm with the human; the CLI itself never gates.
-```
