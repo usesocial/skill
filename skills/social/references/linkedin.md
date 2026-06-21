@@ -146,7 +146,7 @@ Successful write commands update synced collections immediately: `requests cance
 
 `sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
-Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.usageUSD` is `0` on every SQL read.
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. SQL reads omit `.meta.cost`.
 
 `sync_state.object_count` backs `objectCount`; use `totalRows` or `SELECT count(*)` for table totals.
 
@@ -233,7 +233,7 @@ jq -r '.items[] | [.display_name, .description, (.profile_url // .url)] | @tsv'
 jq '.items[] | {id, url: (.profile_url // .url), display_name, description}'
 
 # Inspect billing and paging metadata.
-jq '{cost: .meta.cost, cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolved}'
+jq '{cost: (.meta.cost // 0), cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolved}'
 ```
 
 Save live outputs before chaining so you do not re-bill:

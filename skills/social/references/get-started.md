@@ -142,7 +142,7 @@ Tell the human, in plain language, what the sync will pull and roughly what it
 will cost — e.g. "Syncing your ~4,200 X followers reads each one upstream and is
 metered in usage dollars; at $0.015/item, that's roughly $63 before cache effects.
 Want me to run it?" Be honest that it is an estimate; the exact spend appears in
-`.meta.cost`.
+`.meta.cost` when the response spends usage.
 
 ### 3. Confirm
 
@@ -163,7 +163,7 @@ spends less usage than a full re-pull.
 
 ```bash
 # Actual spend for the call.
-social x sync followers | jq '.meta.cost'
+social x sync followers | jq '.meta.cost // 0'
 
 # Or audit after the fact.
 social account usage

@@ -74,7 +74,7 @@ Full setup detail lives in `references/setup.md`.
 - List results are `.items[]`.
 - Single resources, sync payloads, and schema-style objects are `.data`.
 - Errors are JSON on stderr.
-- `.meta.cost` exists on read/write envelopes. `sql` always reports `{ "usageUSD": 0, "metered": false }`.
+- `.meta.cost` is the USD spent by this response when present. Missing `cost` means the response spent no usage.
 - `.meta.cache` is proxy cache metadata for live reads, or local mirror metadata for SQL; auto-upgrades appear as `.meta.cache.migration`.
 - `.meta.cursor` is cursor pagination when present. `.meta.totalCount` is offset-list total count when present.
 - `--account <@username|profile_id:<id>>` selects a connected account.
@@ -130,7 +130,6 @@ Local SQL metadata:
 ```json
 {
   "meta": {
-    "cost": { "usageUSD": 0, "metered": false },
     "cache": {
       "hit": true,
       "source": "local",
@@ -211,7 +210,7 @@ Never include bearer tokens, magic links, cookies, private message dumps, or unr
 - Use `jq '.items[]'` for live and SQL lists.
 - Use `jq '.data[]'` for bare `sync` listings.
 - Use `jq '.data'` for one resource, sync summaries/resets, or bare `sql` schema output.
-- Use `jq '.meta.cost'` after metered calls.
+- Use `jq '.meta.cost // 0'` after metered calls.
 - Use `social account usage` and `social account logs` after a run to audit spend.
 - `social account logs --limit` is capped at 100 rows per call; for longer windows page with `.meta.cursor` and repeated calls, and prefer `social account usage` for totals.
 - On exit `7` or repeated sync failures, `social account logs --platform <platform> --limit 20` shows recent upstream calls with status and usage — a run of `429`s sizes the rate-limit window.

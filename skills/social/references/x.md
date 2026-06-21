@@ -79,7 +79,7 @@ Likes are inserted into `x_liked` by `social x like <target>` and removed by `so
 
 `sync` output is always `{ data, meta }`; bare sync listings are `.data[]`, and collection summaries or `--reset` results are `.data`. In bare listings, `objectCount` is the most recent run's fetched objects and can be `0` after a checkpoint/caught-up stop; `totalRows` is the local table's current `SELECT count(*)` mirror size.
 
-Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. `.meta.cost.usageUSD` is `0` on every SQL read.
+Bare `sql` prints compact schema metadata under `.data`. Query output is `{ account, items, meta }`; project rows with `.items[]`. SQL reads omit `.meta.cost`.
 
 SQL reads whatever is already in the local mirror. Empty results are valid local truth; use
 `rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
@@ -167,7 +167,7 @@ jq '.items[] | . as $t | {url: $t.url, text: $t.text, author: ($t.author.usernam
 jq '.items[] | {id, url, text, created_at, metrics: .public_metrics}'
 
 # Inspect billing and paging metadata.
-jq '{cost: .meta.cost, cursor: .meta.cursor, resolved: .meta.resolved}'
+jq '{cost: (.meta.cost // 0), cursor: .meta.cursor, resolved: .meta.resolved}'
 ```
 
 Save live outputs before chaining so you do not re-bill:

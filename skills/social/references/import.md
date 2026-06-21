@@ -132,8 +132,7 @@ social x sql "SELECT username, name, followers_count FROM x_followers ORDER BY f
 
 Expected metadata:
 
-- `meta.cost.usageUSD` is `0`.
-- `meta.cost.metered` is `false`.
+- `meta.cost` is absent.
 - `meta.cache.source` is `local`.
 
 If verification fails with missing columns, regenerate the canonical CSV from
