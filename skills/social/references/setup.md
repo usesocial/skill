@@ -82,25 +82,19 @@ After success, credentials live in the OS keyring (service `social-cli`) with a 
 
 Use bare `social account` to inspect auth state and connected accounts. It always prints compact JSON with `status`, credential namespace/path, verified session data when available, connected account rows, and seat counts when the session is online.
 
-Use `social account billing` for the current seat, subscription, and usage-billing snapshot. Use `social account billing portal` to open the hosted billing portal; it prints `{ "url": "...", "opened": true|false }`, so agents can hand the URL to the user when a browser cannot open.
+Use `social account billing` for the current seat, subscription, and usage-billing snapshot. Use `social account billing portal` to print the hosted billing portal URL; it prints `{ "url": "...", "opened": false }`, so agents can hand the URL to the user.
 
 ## Connecting a platform account
 
 `account login` only authenticates the user against the social API. Each platform needs its own connection handshake:
 
 ```bash
-social account connect linkedin    # LinkedIn browser connection
+social account connect linkedin    # LinkedIn connection URL
 social account connect x           # X OAuth handshake
 ```
 
-Like login, connect's behavior depends on the shell:
-
-**Interactive terminal.** Opens the browser, polls until the connection appears in
-bare `social account`, then prints the connected username. LinkedIn
-connect/reconnect times out after 2 minutes; X connect/reconnect after 5 minutes.
-
-**Agent / non-TTY shell.** A non-blocking **state machine** mirroring login - one
-step per call, no waiting:
+Like login, agent/non-TTY connect is a non-blocking **state machine** - one step
+per call, no waiting:
 
 | `.status`          | Meaning                              | Next step |
 | ------------------ | ------------------------------------ | --------- |
@@ -108,8 +102,10 @@ step per call, no waiting:
 | `connected`        | Account is linked (`.account`).      | Done. |
 
 The first call returns `{ status: "pending_approval", platform, connectURL }` and
-prints `Opening <url>`; surface `connectURL` to the user, have them approve in the
-browser, then call `connect` again. Once the account appears it returns
+prints `Open this URL: <url>`; surface `connectURL` to the user, have them
+approve in the browser/profile they want to use, then call `connect` again.
+Interactive connect prints the same URL and polls until the connection appears in
+bare `social account`. Once the account appears it returns
 `{ status: "connected", platform, account }`. Bare `social account` also shows the
 connected-account row. `reconnect` remains the interactive blocking flow. For X,
 the bearer is requested with full scopes; the bearer-session `cliGrant` decides
@@ -221,7 +217,7 @@ window.
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
-| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the opened billing URL, then re-run `social account connect <platform>`. |
+| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the printed billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
 | `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
 | `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the username/id.                                                       |

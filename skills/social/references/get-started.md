@@ -104,10 +104,10 @@ social account connect linkedin   # or: social account connect x
 | `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; poll again. |
 
 A `pending_approval` response carries a `connectURL` — surface it to the human,
-ask them to approve in the browser, then call connect again to advance. When it
-returns `connected`, confirm the linked `@username`. Connecting a platform may
-need a billing seat; if a seat URL is surfaced, hand it to the human the same
-way.
+ask them to approve in the browser/profile they want to use, then call connect
+again to advance. When it returns `connected`, confirm the linked `@username`.
+Connecting a platform may need a billing seat; if a seat URL is surfaced, hand it
+to the human the same way.
 
 Re-run bare `social account` any time to confirm a connected-account row exists
 for the platform.
