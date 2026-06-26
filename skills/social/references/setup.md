@@ -18,23 +18,41 @@ Homebrew is also supported: `brew install usesocial/tap/cli` installs the same b
 
 Two moving parts can drift: the `social` binary and this skill. Keep both fresh, but never update silently — let the user decide before changing installed tools.
 
+Run a fresh check:
+
+```bash
+social update
+```
+
+It prints `{ "cli": ..., "skill": ... }` JSON with `status` and
+`updateCommand` fields. The command is local-only: no auth, no provider calls,
+and no usage cost. Ordinary `social` commands may also show a concise update
+notice on stderr in a human terminal. CI, non-TTY shells, `DO_NOT_TRACK`, and
+`SOCIAL_DO_NOT_TRACK` suppress those notices, and stdout remains JSON-only.
+
 Update the CLI with the package manager the user actually used:
 
 | Installed via | Update command                      |
 | ------------- | ----------------------------------- |
-| Bun           | `bun add -g @usesocial/cli@latest`  |
+| Bun           | `bun install -g @usesocial/cli@latest` |
 | npm           | `npm install -g @usesocial/cli@latest` |
 | Homebrew      | `brew upgrade usesocial/tap/cli`    |
 
-Do **not** infer the manager by resolving `which social` symlinks — it is brittle across `~/.bun/bin` and npm prefixes. Updating the CLI mid-session is safe: each call is a fresh process, so the new binary takes effect on the next command.
-
-If the skill was installed with `npx skills`, update it with:
+If the skill was installed in the project, update it with:
 
 ```bash
-npx skills update social
+bunx --bun skills update social --project --yes
 ```
 
-Updating the skill markdown does **not** change the current session — the old text is already loaded in context; the refresh takes effect the next time the skill loads.
+or, for npm-only environments:
+
+```bash
+npx --yes skills update social --project --yes
+```
+
+Use `--global` instead of `--project` for a global skill. Updating the skill
+markdown does **not** change the current session — the old text is already
+loaded in context; the refresh takes effect the next time the skill loads.
 
 Verify:
 

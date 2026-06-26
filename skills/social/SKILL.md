@@ -23,12 +23,13 @@ commands in parallel, and do not batch LinkedIn reads, syncs, or writes through
 parallel tool calls.
 
 ```
-social account | feedback | schema | x | linkedin
+social account | feedback | schema | update | x | linkedin
 ```
 
 - `social account ...` - login, logout, connect, reconnect, disconnect, inspect accounts, billing, usage, logs, and CLI config.
 - `social feedback bug|feature` - submit a bug report or feature request. Pipe the final report text via stdin.
 - `social schema [command path]` - authoritative command tree. Use bare `social schema` to plan, `social schema --list` for the compact cost/capability index, and `social schema --leaves` only when you need full contracts in a file.
+- `social update` - local-only fresh update check for the CLI binary and this skill. It prints JSON and never authenticates, calls providers, or spends usage.
 - `social x ...` - X profiles, live reads, writes, sync, and SQL. Load `references/x.md`.
 - `social linkedin ...` - LinkedIn profiles, live reads, company Page management, raw proxy, writes, sync, and SQL. Load `references/linkedin.md`.
 
@@ -70,6 +71,7 @@ Full setup detail lives in `references/setup.md`.
 ## Invocation conventions
 
 - Output is compact JSON.
+- Ordinary CLI update notices, when enabled, are concise stderr-only messages. They never change stdout JSON. Use `social update` for an explicit machine-readable check.
 - Platform reads return `{ account, items | data, meta }`; sync commands return `{ data, meta }`; `social account` service commands (`account`, `usage`, `billing`, `logs`) return bare JSON, with `logs` returning `{ items, meta: { cursor } }`.
 - List results are `.items[]`.
 - Single resources, sync payloads, and schema-style objects are `.data`.
