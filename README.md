@@ -1,26 +1,38 @@
-# Social agent skill
+# Social agent plugin
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — plus how to send useful bug reports and feature requests through `social feedback`.
+Agent skills for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI.
+The plugin keeps `/social` for account administration and makes `/linkedin` the
+primary skill for LinkedIn work: connecting an account, researching, posting,
+replying, messaging, managing requests, syncing local data, and auditing spend.
 
 ## What ships
 
-One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my saved X posts") and is also invokable as `/social`.
+Two skills ship in one plugin:
 
-- **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, feedback mode, billing, safety, and how to pick a platform reference.
-- **`skills/social/references/get-started.md`** — guided onboarding: install check, login, connect, and first sync with explicit cost consent.
-- **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
-- **`skills/social/references/import.md`** — local SQLite import playbooks for complete already-downloaded exports.
-- **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
-- **`skills/social/references/x.md`** — full X command catalog, field/expansion presets, output shapes, `jq` recipes, and end-to-end playbooks.
+- **`skills/social/SKILL.md`** -> `/social` - install, login, logout, billing,
+  usage, logs, update checks, setup troubleshooting, and feedback.
+- **`skills/social/references/setup.md`** - account/admin setup, login, billing,
+  logs, updates, errors, and troubleshooting.
+- **`skills/linkedin/SKILL.md`** -> `/linkedin` - LinkedIn connection and
+  LinkedIn operation through `social linkedin ...`.
+- **`skills/linkedin/references/get-started.md`** - guided LinkedIn onboarding:
+  install check, login, connect LinkedIn, and first sync with explicit cost
+  consent.
+- **`skills/linkedin/references/linkedin.md`** - full LinkedIn command catalog,
+  flags, output shapes, `jq` recipes, and end-to-end playbooks.
+
+The plugin remains named `social` so existing install and update commands keep
+working. LinkedIn is the primary operator skill.
 
 ## Text input
 
-All freeform text for posts, comments, messages, message edits, and connection
-request notes is sent via stdin. Do not pass text as a positional argument:
+All freeform text for LinkedIn posts, comments, messages, message edits, and
+connection request notes is sent via stdin. Do not pass text as a positional
+argument:
 
 ```sh
-echo "Thanks for the note." | social x message @username
 echo "Thanks for the note." | social linkedin message @username
+social linkedin post < draft.md
 ```
 
 Targets, typed IDs, URLs, and usernames still go on argv. Pipe a JSON object via
@@ -51,11 +63,12 @@ For local development:
 npx skills add ./skill
 ```
 
-The repo also carries Claude and Codex plugin manifests for agents that can consume plugin directories directly.
+The repo also carries Claude and Codex plugin manifests for agents that can
+consume plugin directories directly.
 
 ## Prerequisites
 
-The skill expects the `social` binary on `PATH`. If it is missing, ask the user
+The plugin expects the `social` binary on `PATH`. If it is missing, ask the user
 before installing global tools, then have them run the setup command in an
 interactive terminal:
 
@@ -63,15 +76,18 @@ interactive terminal:
 curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-Keep the skill current with `npx skills update social`. Re-run the relevant install command when you need to update the CLI.
+Keep the plugin current with `npx skills update social`. Re-run the relevant
+install command when the CLI needs an update.
 
 ## Configuration
 
-Env vars are optional — defaults point at the hosted API:
+Env vars are optional; defaults point at the hosted API:
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `SOCIAL_API_URL` | `https://api.usesocial.dev/v1` | API base URL |
 | `SOCIAL_WEB_URL` | `https://usesocial.dev` | Device-approval web URL |
 
-For local development, point both at localhost. See `skills/social/references/setup.md` for the full setup, scope, and troubleshooting reference.
+For local development, point both at localhost. See
+`skills/social/references/setup.md` for account/admin setup and
+`skills/linkedin/references/get-started.md` for LinkedIn connection.
