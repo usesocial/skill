@@ -1,22 +1,22 @@
 {
   "name": "social",
   "version": "0.1.0",
-  "description": "Use the social CLI to run LinkedIn outreach, posting, audience insights, inbox triage, account research, and account administration.",
+  "description": "Use the social CLI to run outreach, posting, audience insights, inbox/DM triage, and account research across LinkedIn and X.",
   "author": {
     "name": "Cyrus Nouroozi",
     "email": "knouroozi@gmail.com"
   },
   "homepage": "https://usesocial.dev",
   "repository": "https://github.com/usesocial/skill",
-  "keywords": ["social", "linkedin", "cli", "usesocial"],
+  "keywords": ["social", "linkedin", "x", "twitter", "cli", "usesocial"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Social",
-    "shortDescription": "Run LinkedIn through the social CLI.",
-    "longDescription": "Social lets Codex run LinkedIn distribution through the social CLI — search people and posts, read profiles, comments, reactions, companies, jobs, inboxes, and requests, manage connected accounts, and post where enabled. One login, one bill; the agent runs the calls, you stay the decision-maker.",
+    "shortDescription": "Run distribution across LinkedIn and X.",
+    "longDescription": "Social lets Codex run distribution through the social CLI — search people and posts, read profiles, timelines, comments, reactions, companies, jobs, bookmarks, inboxes, and DMs, manage connected accounts, and post where enabled. One login, one bill; the agent runs the calls, you stay the decision-maker.",
     "developerName": "Cyrus Nouroozi",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Help me use the social CLI for LinkedIn."
+    "defaultPrompt": "Help me use the social CLI."
   }
 }
