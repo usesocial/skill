@@ -62,7 +62,7 @@ Interpret the output:
 - `command not found: social` - ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal.
 - `"status": "logged_out"` or `"expired"` - run `social account login`. In an agent shell it is a non-blocking poll: the first call returns `{ "status": "pending_approval", "verificationURL", ... }` - surface `verificationURL` to the user, then call `login` again on a gentle interval until `"status": "logged_in"` (or `"expired"`, which means re-run to restart). See `references/get-started.md`.
 - `"status": "logged_in"` with a connected-account row for the platform - ready.
-- Logged in but no row for the platform - run `social account connect linkedin` or `social account connect x`. In an agent shell it is also a poll: it returns `{ "status": "pending_approval", "connectURL" }` until the user approves in the browser, then `{ "status": "connected", "account" }`. Surface `connectURL` and call again to advance.
+- Logged in but no row for the platform - run `social account connect linkedin` or `social account connect x`. In an agent shell it is also a poll: it returns `{ "status": "pending_billing", "paymentURL" }` when a seat must be activated, `{ "status": "pending_approval", "connectURL" }` until the user approves in the browser, then `{ "status": "connected", "account" }`. Surface the URL and call again to advance.
 
 Read `.status` from the JSON, not the exit code. Do not background `login` or `connect`, pipe `yes` into them, or poll them without a cap.
 

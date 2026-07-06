@@ -50,7 +50,7 @@ social linkedin search posts "agent CLI" --limit 25 --offset 0 \
 social linkedin search people "devtools founder" --limit 25 --offset 0
 ```
 
-People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `can_send_inmail`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
+People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
 
 Live responses keep upstream field names (`display_name`, `public_identifier`, `network_distance`); the normalized `name`/`username`/`distance` names exist only as local SQL view columns.
 

@@ -116,16 +116,20 @@ per call, no waiting:
 
 | `.status`          | Meaning                              | Next step |
 | ------------------ | ------------------------------------ | --------- |
+| `pending_billing`  | A billing seat must be activated.    | Surface `paymentURL`; call `connect` again after checkout. |
 | `pending_approval` | No account linked yet.               | Surface `connectURL`; call `connect` again to poll. |
 | `connected`        | Account is linked (`.account`).      | Done. |
 
-The first call returns `{ status: "pending_approval", platform, connectURL }` and
-prints `Open this URL: <url>`; surface `connectURL` to the user, have them
-approve in the browser/profile they want to use, then call `connect` again.
-Interactive connect prints the same URL and polls until the connection appears in
-bare `social account`. Once the account appears it returns
-`{ status: "connected", platform, account }`. Bare `social account` also shows the
-connected-account row. `reconnect` remains the interactive blocking flow. For X,
+The first call may return `{ status: "pending_billing", platform, paymentURL }`
+and print `Open this URL: <url>`; surface `paymentURL`, have the user complete
+checkout, then call `connect` again. Once billing is ready, connect returns
+`{ status: "pending_approval", platform, connectURL }` and prints
+`Open this URL: <url>`; surface `connectURL` to the user, have them approve in
+the browser/profile they want to use, then call `connect` again. Interactive
+connect prints the same URL and polls until the connection appears in bare
+`social account`. Once the account appears it returns
+`{ status: "connected", platform, account }`. Bare `social account` also shows
+the connected-account row. `reconnect` remains the interactive blocking flow. For X,
 the bearer is requested with full scopes; the bearer-session `cliGrant` decides
 usage scope at request time.
 
