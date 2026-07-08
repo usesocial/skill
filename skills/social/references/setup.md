@@ -38,19 +38,19 @@ Update the CLI with the package manager the user actually used:
 | npm           | `npm install -g @usesocial/cli@latest` |
 | Homebrew      | `brew upgrade usesocial/tap/cli`    |
 
-If the skill was installed in the project, update it with:
+If the skill was installed globally, update it with:
 
 ```bash
-bunx --bun skills update social --project --yes
+bunx --bun skills update social --global --yes
 ```
 
 or, for npm-only environments:
 
 ```bash
-npx --yes skills update social --project --yes
+npx --yes skills update social --global --yes
 ```
 
-Use `--global` instead of `--project` for a global skill. Updating the skill
+Use `--project` instead of `--global` only for a project-local skill. Updating the skill
 markdown does **not** change the current session — the old text is already
 loaded in context; the refresh takes effect the next time the skill loads.
 

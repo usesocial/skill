@@ -48,8 +48,11 @@ npx skills add usesocial/skill
 For local development:
 
 ```sh
-npx skills add ./skill
+just install skill
 ```
+
+Run it from the monorepo root. It refreshes the home-level Agents and Claude
+skill installs from `apps/cli/plugin/skills/social`.
 
 The repo also carries Claude and Codex plugin manifests for agents that can consume plugin directories directly.
 
@@ -63,7 +66,7 @@ interactive terminal:
 curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-Keep the skill current with `npx skills update social`. Re-run the relevant install command when you need to update the CLI.
+Keep the skill current with `npx skills update social --global`. Re-run the relevant install command when you need to update the CLI.
 
 ## Configuration
 
