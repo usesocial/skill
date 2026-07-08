@@ -72,7 +72,7 @@ social account config page company_id:<company-id>
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `page visitors` | `--since <ISO>`, `--until <ISO>`, `--page <company>`, `--account` | Company Page visitor analytics. Live, metered, premium analytics; confirm cost before running. |
+| `page visitors` | `--since <ISO>`, `--until <ISO>`, `--page <company>`, `--account` | Company Page visitor analytics. Live, metered, premium analytics; state the cost, and confirm first if the estimate reaches $5. |
 | `page invite <user...>` | `--page <company>`, `--account` | Invite users to follow the selected Page. Targets accept `@username`, `profile_id:<id>`, profile URL, or profile URN. Outbound write; no message body. |
 
 ```bash

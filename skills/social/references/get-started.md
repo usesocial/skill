@@ -3,15 +3,16 @@
 The guided first-run flow: install check → sign in → connect a platform → first
 sync. This is the home of the **skill-owns-consent** pattern — the CLI never
 prompts and never blocks on approval, so *you* (the agent) estimate cost, state
-it, and get the human's explicit yes before anything that spends usage.
+it, and get the human's explicit yes before anything estimated at $5 or more.
+Cheaper metered steps just run, with the spend reported afterward.
 The policy core lives in `SKILL.md`; this reference applies it to first-run
 onboarding.
 
 Run it when the user says "let's get started with /social", "set me up", "log me
 in", or asks to connect LinkedIn/X for the first time. The install/account
 checks, login polling, and connect polling below are free, non-blocking checks.
-Do not run a metered live read while estimating first-sync cost unless you say
-so first and get the human's explicit yes.
+A metered live read used to size the first sync (a profile lookup) costs cents —
+well under the $5 line — so run it when it helps, and mention the spend.
 
 ## The shape of onboarding
 
@@ -115,9 +116,10 @@ for the platform.
 
 ## Step 4 — First sync, with the consent pattern
 
-This is the one step that spends usage, so it is the one step that needs an
-explicit yes. The pattern is always: **estimate → state → confirm → run →
-verify.**
+This is the one step that spends real usage. The pattern is always:
+**estimate → state → confirm (at $5+) → run → verify.** A full-graph first sync
+usually clears $5 easily; a small targeted sync (say, just DMs) often does not,
+and can run once you have stated the estimate.
 
 ### 1. Estimate
 
@@ -132,10 +134,9 @@ social schema "x sync" | jq '.cost'
 ```
 
 For LinkedIn use `social schema "linkedin sync"`. If you need a fresher count
-than the user or local metadata can provide, ask before running a live profile
-lookup. `social x profile --account <@username>` and
-`social linkedin profile --account <@username>` are metered live reads; they can
-improve the estimate, but they are not free setup probes.
+than the user or local metadata can provide, `social x profile --account
+<@username>` and `social linkedin profile --account <@username>` are metered
+live reads costing cents; run one to improve the estimate and mention the spend.
 
 ### 2. State the estimate
 
@@ -143,13 +144,18 @@ Tell the human, in plain language, what the sync will pull and roughly what it
 will cost — e.g. "Syncing your ~4,200 X followers reads each one upstream and is
 metered in usage dollars; at $0.015/item, that's roughly $63 before cache effects.
 Want me to run it?" Be honest that it is an estimate; the exact spend appears in
-`.meta.cost` when the response spends usage.
+`.meta.cost` when the response spends usage. If the estimate will likely run
+past the included usage, say so: nothing blocks — the account auto-tops-up $15
+of usage credits at a time, and that is the actual charge the human is agreeing
+to.
 
 ### 3. Confirm
 
-Get an explicit yes. **Do not sync on assumption.** If the user only wanted, say,
-their DMs, sync just that collection (`social x sync messages`) instead of the
-full graph. Smaller, targeted syncs cost less.
+If the estimate reaches $5 — or you cannot bound it below $5 — get an explicit
+yes. **Do not run a $5+ sync on assumption.** Under $5, the stated estimate is
+enough; just run it. If the user only wanted, say, their DMs, sync just that
+collection (`social x sync messages`) instead of the full graph. Smaller,
+targeted syncs cost less and often duck under the threshold entirely.
 
 ### 4. Run
 
@@ -182,8 +188,9 @@ The user is now set up. Hand off to the platform references for day-to-day work:
 - `references/setup.md` — auth state machine details, scopes/billing, cache,
   error catalog, troubleshooting.
 
-The consent pattern from Step 4 applies to every credit-spending or
-account-mutating command, not just the first sync: estimate, state, confirm,
-then act. See the hazard vocabulary in `SKILL.md` — `spends_usage`,
-`destructive`, and `outbound_write` hazards are advisory signals that *you*
-confirm with the human; the CLI itself never gates.
+The consent pattern from Step 4 applies beyond the first sync: for any
+usage-spending command, estimate and state the cost, and get a yes when the
+estimate — for one command, or the task's metered commands taken together —
+reaches $5. `destructive` and `outbound_write` hazards are always confirmed,
+regardless of cost. See the hazard vocabulary in `SKILL.md`; hazards are
+advisory signals that *you* act on — the CLI itself never gates.
