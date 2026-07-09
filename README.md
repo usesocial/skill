@@ -1,16 +1,17 @@
 # Social agent skill
 
-An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn and X — outreach, posting, audience insights, message triage, account research, billing audits — plus how to send useful bug reports and feature requests through `social feedback`.
+An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesocial/cli) CLI. It teaches supported agents when and how to call `social` to interact with LinkedIn, Instagram, and X — outreach, posting, audience insights, message triage, account research, billing audits — plus how to send useful bug reports and feature requests through `social feedback`.
 
 ## What ships
 
-One `social` skill spanning both platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my saved X posts") and is also invokable as `/social`.
+One `social` skill spanning all supported platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my Instagram DMs", "my saved X posts") and is also invokable as `/social`.
 
 - **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, feedback mode, billing, safety, and how to pick a platform reference.
 - **`skills/social/references/get-started.md`** — guided onboarding: install check, login, connect, and first sync with explicit cost consent.
-- **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting (both platforms).
+- **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting.
 - **`skills/social/references/import.md`** — local SQLite import playbooks for complete already-downloaded exports.
 - **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
+- **`skills/social/references/instagram.md`** — full Instagram command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.
 - **`skills/social/references/x.md`** — full X command catalog, field/expansion presets, output shapes, `jq` recipes, and end-to-end playbooks.
 
 ## Text input
@@ -21,6 +22,7 @@ request notes is sent via stdin. Do not pass text as a positional argument:
 ```sh
 echo "Thanks for the note." | social x message @username
 echo "Thanks for the note." | social linkedin message @username
+echo "Thanks for the note." | social instagram message chat_id:<chat-id>
 ```
 
 Targets, typed IDs, URLs, and usernames still go on argv. Pipe a JSON object via

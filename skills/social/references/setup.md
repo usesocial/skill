@@ -1,6 +1,6 @@
 # Setup & Auth
 
-How to get `social` working from a fresh machine and how to recover from auth failures. Shared across LinkedIn and X — only the per-platform `connect` handshake differs.
+How to get `social` working from a fresh machine and how to recover from auth failures. Shared across LinkedIn, Instagram, and X — only the per-platform `connect` handshake differs.
 
 ## Install the CLI
 
@@ -108,6 +108,7 @@ Use `social account billing` for the current seat, subscription, and usage-billi
 
 ```bash
 social account connect linkedin    # LinkedIn connection URL
+social account connect instagram   # Instagram connection URL
 social account connect x           # X OAuth handshake
 ```
 
@@ -129,7 +130,7 @@ the browser/profile they want to use, then call `connect` again. Interactive
 connect prints the same URL and polls until the connection appears in bare
 `social account`. Once the account appears it returns
 `{ status: "connected", platform, account }`. Bare `social account` also shows
-the connected-account row. `reconnect` remains the interactive blocking flow. For X,
+the connected-account row. `reconnect` remains the interactive blocking flow. Instagram and LinkedIn use Unipile hosted auth; web connect lives at `/connect/instagram` and `/connect/linkedin`. For X,
 the bearer is requested with full scopes; the bearer-session `cliGrant` decides
 usage scope at request time.
 
@@ -139,6 +140,10 @@ To swap accounts:
 social account
 social account disconnect linkedin <@username|profile_id:<id>>
 social account reconnect linkedin <@username|profile_id:<id>>
+
+social account
+social account disconnect instagram <@username|profile_id:<id>>
+social account reconnect instagram <@username|profile_id:<id>>
 
 social account
 social account disconnect x <@username|profile_id:<id>>
@@ -152,7 +157,7 @@ The bearer token carries one of:
 - `read` — list/get only.
 - `read,write` — adds POST/PUT/DELETE proxy capabilities.
 
-`read,write` already covers LinkedIn Page invites and raw proxy writes; there is no separate Page scope.
+`read,write` already covers LinkedIn Page invites, LinkedIn raw proxy writes, and Instagram writes; there is no separate Page or Instagram scope.
 
 Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
@@ -185,6 +190,7 @@ Use command-level cache headers only when command help lists `--header`:
 social linkedin profile @username -H "Cache-Control: no-cache"   # bypass cache read, refresh cache
 social linkedin profile @username -H "Cache-Control: no-store"   # bypass cache read and write
 social linkedin profile @username -H "Cache-Control: max-age=60" # override TTL for this request
+social instagram profile @username -H "Cache-Control: no-cache"
 ```
 
 `Cache-Control` is the functional request cache surface. Cached responses may
@@ -198,7 +204,7 @@ Defaults point at production; override only for local dev or staging:
 
 | Variable                         | Default                        | Purpose                                                                                           |
 | -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `SOCIAL_API_URL`                 | `https://api.usesocial.dev/v1` | Versioned API base. ORPC at `${SOCIAL_API_URL}/rpc`, proxy at `${SOCIAL_API_URL}/{linkedin,x}/*`. |
+| `SOCIAL_API_URL`                 | `https://api.usesocial.dev/v1` | Versioned API base. ORPC at `${SOCIAL_API_URL}/rpc`, proxy at `${SOCIAL_API_URL}/{linkedin,instagram,x}/*`. |
 | `SOCIAL_WEB_URL`                 | `https://usesocial.dev`        | Web app for device approval and OAuth landing.                                                    |
 | `WSL_DISTRO_NAME`, `WSL_INTEROP` | —                              | **Auto-detected.** Do not set.                                                                    |
 
@@ -234,14 +240,14 @@ window.
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account login`.                                                  |
 | `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account login` and choose Read + Write. |
-| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`.         |
+| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin`, `social account connect instagram`, or `social account connect x`. |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed username/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
 | `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the printed billing URL, then re-run `social account connect <platform>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
-| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
+| `linkedin_connect_timed_out` / `instagram_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
 | `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the username/id.                                                       |
 
 ## Troubleshooting
@@ -251,7 +257,7 @@ window.
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
 | `Not signed in` / `unauthenticated` | No token or expired.                             | `social account login`.                                                      |
 | `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account login` and choose Read + Write. |
-| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect x`.              |
+| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect instagram` / `social account connect x`. |
 | Browser fails to open               | WSL or headless.                                 | Re-run from the agent/non-TTY context and surface the printed URL to the user. |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
 
@@ -262,5 +268,6 @@ The authoritative machine-readable command tree — use it when uncertain about 
 ```bash
 social schema | jq '.subCommands | keys'
 social schema | jq '.subCommands.linkedin.subCommands | keys'
+social schema | jq '.subCommands.instagram.subCommands | keys'
 social schema | jq '.subCommands.x.subCommands | keys'
 ```
