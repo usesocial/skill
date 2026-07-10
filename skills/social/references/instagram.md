@@ -39,7 +39,6 @@ Post targets accept `post_id:<id>` or a post URL. Conversation targets accept `c
 | `locations` | `--search-query`, `--latitude`, `--longitude`, `--account`, `-H/--header` | Search Instagram locations. |
 | `user comments [target]` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Comments by a user. |
 | `user reactions [target]` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions by a user. |
-| `user relations [target]` | `--search`, `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | User relation list. |
 | `requests list` | `--type`, `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Relation requests. |
 
 Live reads may hit the proxy cache. Cache hits are free; fresh upstream calls are metered. Followers and following use the same 15-minute cache TTL as other cacheable reads, but still page carefully: a full graph can spend real usage. Messages are own-data reads; use sync+SQL for inbox work because message freshness is always latest-only, not TTL-fresh.
@@ -70,8 +69,6 @@ Confirm with the user before every write.
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `post` | body from stdin; `--location`, `--media`, `--account` | Create a post. |
-| `posts update <target>` | body from stdin | Update a post. |
 | `posts delete <target>` | `--account` | Delete a post. |
 | `posts unreact <target>` | `--body`, `--account` | Remove your post reaction. |
 | `comment <target>` | body from stdin; `--media`, `--account` | Comment on a post. |
@@ -91,15 +88,12 @@ Confirm with the user before every write.
 | `message unreact <chat> <message>` | `--body`, `--account` | Remove your message reaction. |
 | `message edit <chat> <message>` | new text from stdin | Edit one of your own messages. |
 | `message delete <chat> <message>` | `--account` | Delete one of your own messages. |
-| `requests send <target>` | optional note from stdin | Send a relation request. |
 | `requests accept <request-id>` | `--account` | Accept a relation request. |
 | `requests cancel <request-id>` | `--account` | Cancel or refuse a relation request. |
-| `relations delete <target>` | `--account` | Delete an Instagram relation. |
 
 Writes are metered and require `read,write`. The skill, not the CLI, owns consent: show the action, target, and body/media summary, then get a yes. For high-fanout metered reads, estimate from schema and confirm first only when the task total reaches $5.
 
 ```bash
-echo "Shipping from the terminal." | social instagram post --media ./image.jpg
 echo "Thoughtful launch." | social instagram comment post_id:<post-id>
 social instagram react post_id:<post-id> --type like
 echo "Thanks for the note." | social instagram message chat_id:<chat-id>
