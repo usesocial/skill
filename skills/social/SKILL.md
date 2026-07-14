@@ -7,7 +7,7 @@ description: |
   connected-account management, billing audits, bug reports, and feature requests. Triggers include "search
   LinkedIn", "find <name> on LinkedIn", "find <name> on Instagram",
   "my Instagram DMs", "Instagram followers", "look up this tweet", "my X bookmarks",
-  "show my home timeline", "check my messages", "from:<username>", "report a
+  "check my messages", "from:<username>", "report a
   bug", "request a feature", "send feedback", "let's get started with social",
   "set me up", "log me in", "connect my LinkedIn/Instagram/X", and explicit `/social`.
   Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's, Instagram's, or X's

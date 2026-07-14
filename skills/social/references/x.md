@@ -24,7 +24,7 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 | `followers <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | A user's followers, live and metered; target required. For your own graph, run `social x sync followers`, then query `x_followers` with SQL. |
 | `following <target>` | `--limit 1-1000`, `--cursor`, `--user-fields`, `--expansions`, `--tweet-fields`, `--account`, `-H/--header` | Accounts a user follows, live and metered; target required. For your own graph, run `social x sync following`, then query `x_following` with SQL. |
 
-Live reads are for fresh data or someone else's graph. Your own graph, posts, and home timeline are sync+sql: `social x sync followers|following|tweets|timeline|liked|mentions`, then query `x_followers`, `x_following`, `x_tweets`, `x_timeline`, `x_liked`, or `x_mentions`.
+Live reads are for fresh data or someone else's graph. Your own graph and posts are sync+sql: `social x sync followers|following|tweets|liked|mentions`, then query `x_followers`, `x_following`, `x_tweets`, `x_liked`, or `x_mentions`.
 
 ## Tweets and engagement
 
@@ -64,7 +64,6 @@ mirror instead of running `social x sync followers`.
 social x sync
 social x sync messages
 social x sync messages --since 2026-06-01
-social x sync timeline --since 2026-05-04
 social x sync tweets --since 2026-05-04 --timeout 900
 social x sql
 ```
@@ -124,11 +123,6 @@ social x sql "SELECT text, url, like_count, retweet_count, reply_count FROM x_li
 # Mentions of you, free after sync.
 social x sync mentions
 social x sql "SELECT text, url, author_id, like_count, retweet_count, reply_count FROM x_mentions ORDER BY created_at DESC LIMIT 100" \
-  | jq '.items[]'
-
-# Home timeline, free after sync.
-social x sync timeline
-social x sql "SELECT t.text, t.url, p.username AS author_username, datetime(t.created_at/1000,'unixepoch') AS at FROM x_timeline t LEFT JOIN x_profiles p ON p.provider_id = t.author_id ORDER BY t.created_at DESC LIMIT 100" \
   | jq '.items[]'
 
 # Own-content audit, free after sync. Metric columns are flat:
