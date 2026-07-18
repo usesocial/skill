@@ -5,14 +5,14 @@ description: |
   outreach, posting, audience insights, message triage, account research,
   comments/reactions, companies, company Page management, jobs, bookmarks,
   connected-account management, billing audits, bug reports, and feature requests. Triggers include "search
-  LinkedIn", "find <name> on LinkedIn", "find <name> on Instagram",
+  LinkedIn", "find someone on LinkedIn", "find someone on Instagram",
   "my Instagram DMs", "Instagram followers", "look up this tweet", "my X bookmarks",
-  "check my messages", "from:<username>", "report a
+  "check my messages", "from:username", "report a
   bug", "request a feature", "send feedback", "let's get started with social",
-  "set me up", "log me in", "connect my LinkedIn/Instagram/X", and explicit `/social`.
+  "set me up", "log me in", "connect my LinkedIn/Instagram/X", "connect Social via MCP",
+  "what is my Social MCP URL", "how do I get the MCP auth code", and explicit `/social`.
   Operates the `social` CLI (npm `@usesocial/cli`); never call LinkedIn's, Instagram's, or X's
   HTTP APIs directly.
-argument-hint: 'task - e.g. "get started", "go through my instagram inbox", "list my saved X posts", "read my DMs"'
 ---
 
 # social
@@ -24,11 +24,12 @@ commands in parallel, and do not batch LinkedIn reads, syncs, or writes through
 parallel tool calls.
 
 ```
-social account | feedback | schema | update | x | linkedin | instagram
+social account | feedback | mcp | schema | update | x | linkedin | instagram
 ```
 
 - `social account ...` - login, logout, connect, reconnect, disconnect, inspect accounts, billing, usage, logs, and CLI config.
 - `social feedback bug|feature` - submit a bug report or feature request. Pipe the final report text via stdin.
+- `social mcp url` - print the canonical, secret-free hosted MCP URL. Load `references/mcp.md` for client setup and OAuth troubleshooting.
 - `social schema [command path]` - authoritative command tree. Use bare `social schema` to plan, `social schema --list` for the compact cost/capability index, and `social schema --leaves` only when you need full contracts in a file.
 - `social update` - local-only fresh update check for the CLI binary and this skill. It prints JSON and never authenticates, calls providers, or spends usage.
 - `social x ...` - X profiles, live reads, writes, sync, and SQL. Load `references/x.md`.
@@ -69,6 +70,18 @@ Interpret the output:
 Read `.status` from the JSON, not the exit code. Do not background `login` or `connect`, pipe `yes` into them, or poll them without a cap.
 
 Full setup detail lives in `references/setup.md`.
+
+## Hosted MCP
+
+When the user asks how to connect Social to an MCP client, how to get their MCP
+URL, or where to get an authorization code, load `references/mcp.md`.
+
+`social mcp url` prints the canonical, secret-free remote server URL. It is not
+supposed to print a user-specific URL, API key, bearer token, or authorization
+code. Add that URL to an OAuth-capable Streamable HTTP MCP client; the client
+starts Social's browser login and consent flow when it connects or first uses a
+tool. The client receives and exchanges the temporary authorization code with
+PKCE automatically. Never ask the user to extract or paste that code.
 
 ## Invocation conventions
 
@@ -187,7 +200,7 @@ Cap loops before running them. Save large responses to temp files and project wi
 
 ## Choosing a command
 
-1. Decide whether the task is setup/onboarding, feedback, X, LinkedIn, or Instagram. For onboarding, load `references/get-started.md`.
+1. Decide whether the task is setup/onboarding, MCP connection, feedback, X, LinkedIn, or Instagram. For onboarding, load `references/get-started.md`; for MCP connection, load `references/mcp.md`.
 2. Load `references/x.md`, `references/linkedin.md`, or `references/instagram.md` for platform work.
 3. Decide whether the data is local-own-data (`sync` + `sql`) or live network data (named read).
 4. Confirm `destructive` and `outbound_write` hazards with the user before running them; confirm `spends_usage` only when the estimate reaches $5 (see Hazards and consent).
@@ -291,6 +304,7 @@ count), treat it as $5+.
 
 - `references/get-started.md` - guided onboarding (install → login → connect → first sync) and the skill-owns-consent pattern.
 - `references/setup.md` - install, login, connect, scopes/billing, cache, errors, troubleshooting.
+- `references/mcp.md` - hosted MCP URL, OAuth connection flow, scopes, and client troubleshooting.
 - `references/import.md` - local SQLite imports for complete already-downloaded exports.
 - `references/linkedin.md` - LinkedIn command catalog and recipes.
 - `references/instagram.md` - Instagram command catalog and recipes.

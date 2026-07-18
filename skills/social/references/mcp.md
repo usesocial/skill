@@ -1,0 +1,69 @@
+# Hosted Social MCP
+
+Use this reference when a user asks how to connect Social through MCP, how to
+find their MCP URL, or how to get an authorization code.
+
+## Connect
+
+Print the canonical production URL:
+
+```bash
+social mcp url
+```
+
+The result is intentionally the same secret-free URL for every user:
+
+```text
+https://mcp.usesocial.dev
+```
+
+Configure it as a remote Streamable HTTP server in an OAuth-capable MCP client.
+Then click the client's **Connect** or **Authenticate** action, or invoke a
+Social tool so the client starts authentication. A useful first request is:
+
+```text
+Use Social to show my connected accounts.
+```
+
+The MCP client should open Social in the browser. The user enters their email,
+redeems the magic link, and approves the requested capabilities. Existing
+emails sign in; new emails create a Social account.
+
+## Authorization codes and tokens
+
+Do not obtain, display, or paste an authorization code manually. The MCP client:
+
+1. discovers Social's OAuth metadata;
+2. dynamically registers itself;
+3. starts an authorization-code flow with S256 PKCE;
+4. receives the temporary code at its own redirect URI; and
+5. exchanges the code for access and refresh tokens.
+
+The MCP URL never contains an API key or token. Do not append credentials as a
+query parameter or reuse the CLI bearer. Production MCP authentication is OAuth
+only.
+
+## Permissions
+
+The default grant is read-only. Ask for write scopes only when the user wants
+MCP tools to post, message, react, follow, edit, or delete. Writes execute
+immediately; the MCP client owns confirmation before calling them.
+
+## Troubleshooting
+
+- **No browser opens:** click the client's connect/authenticate control or invoke
+  a Social tool. Re-add the server as remote Streamable HTTP if necessary.
+- **The client asks for an API key, bearer token, or pasted authorization code:**
+  it likely does not support remote MCP OAuth. Do not invent or expose a secret;
+  ask which client/version the user is configuring and check its OAuth support.
+- **`social mcp` is unknown:** update the installed Social CLI, then rerun
+  `social mcp url`.
+- **Login succeeds but tools are missing:** reconnect and approve the required
+  read or write scopes. Tool visibility follows the exact OAuth grant.
+
+Discovery endpoints, useful only for client diagnostics:
+
+```text
+https://mcp.usesocial.dev/.well-known/oauth-protected-resource
+https://usesocial.dev/.well-known/oauth-authorization-server/api/auth
+```
