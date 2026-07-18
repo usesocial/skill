@@ -29,6 +29,7 @@ social account | feedback | mcp | schema | update | x | linkedin | instagram
 
 - `social account ...` - login, logout, connect, reconnect, disconnect, inspect accounts, billing, usage, logs, and CLI config.
 - `social feedback bug|feature` - submit a bug report or feature request. Pipe the final report text via stdin.
+- `social mcp install` - print the global, non-interactive `add-mcp` command. Execute it only when the user asks to configure detected MCP clients.
 - `social mcp url` - print the canonical, secret-free hosted MCP URL. Load `references/mcp.md` for client setup and OAuth troubleshooting.
 - `social schema [command path]` - authoritative command tree. Use bare `social schema` to plan, `social schema --list` for the compact cost/capability index, and `social schema --leaves` only when you need full contracts in a file.
 - `social update` - local-only fresh update check for the CLI binary and this skill. It prints JSON and never authenticates, calls providers, or spends usage.
