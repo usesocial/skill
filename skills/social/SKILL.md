@@ -96,7 +96,8 @@ PKCE automatically. Never ask the user to extract or paste that code.
 - `.meta.cache` is proxy cache metadata for live reads, or local mirror metadata for SQL; auto-upgrades appear as `.meta.cache.migration`.
 - `.meta.cursor` is cursor pagination when present. `.meta.totalCount` is offset-list total count when present.
 - `--account <@username|profile_id:<id>>` selects a connected account.
-- `social account config account <selector>` sets the local default account selector; omit `<selector>` to read it.
+- `social account default get <linkedin|x>` reads that platform's shared server default.
+- `social account default set <linkedin|x> <selector>` sets it across CLI and MCP.
 - `social account config page <company-id>` sets the local default LinkedIn company Page selector; omit `<company-id>` to read it.
 - `--page <company>` selects a LinkedIn company Page for `linkedin page` commands and overrides the configured default. It accepts `company_id:<id>`, a company URL, or a vanity.
 - `-H, --header <Name: value>` is only for cacheable live reads whose help/schema list it.

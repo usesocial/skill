@@ -63,10 +63,10 @@ social linkedin search people "devtools founder" --limit 100 --offset 0 \
 
 Company Page commands resolve the Page from `--page <company>` or the configured default. `--page` accepts `company_id:<id>`, a company URL, or a vanity; plain numeric IDs are treated as `company_id:<id>`.
 
-Set defaults locally:
+Set the shared LinkedIn account default and local Page default:
 
 ```bash
-social account config account @username
+social account default set linkedin @username
 social account config page company_id:<company-id>
 ```
 

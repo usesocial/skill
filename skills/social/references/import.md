@@ -28,7 +28,7 @@ The sync engine stores one SQLite DB per selected account:
 social account | jq '.accounts[] | select(.platform == "x") | {username, profileId, status}'
 ```
 
-The default account selector is `@username` for the first connected X account.
+Read the shared X default with `social account default get x`.
 For an explicit account, use the same selector you would pass to `--account`.
 
 The cache filename is:

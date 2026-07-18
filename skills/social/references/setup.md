@@ -170,7 +170,7 @@ Choose Read + Write in the login prompt.
 
 ## Per-call account selection
 
-Every command accepts `--account <@username|profile_id:<id>>`. Without it the CLI uses the default account. Use it to disambiguate when multiple accounts of the same platform are connected. Resolves against bare `social account`.
+Every command accepts `--account <@username|profile_id:<id>>`. Without it the CLI uses that platform's shared server default. Use `social account default get <linkedin|x>` to inspect it and `social account default set <linkedin|x> <selector>` to change it across CLI and MCP. Use `--account` to override it for one call. Selectors resolve against bare `social account`.
 
 ## Caching
 
