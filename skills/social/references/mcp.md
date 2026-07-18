@@ -13,7 +13,7 @@ $(social mcp install)
 
 `social mcp install` only prints a fixed `bunx add-mcp` or `npx add-mcp`
 command; command substitution executes it. The emitted command includes
-`--global --yes`.
+`--global` and leaves client selection interactive.
 
 Print the canonical production URL:
 
