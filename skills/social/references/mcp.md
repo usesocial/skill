@@ -55,9 +55,9 @@ only.
 
 ## Permissions
 
-The default grant is read-only. Ask for write scopes only when the user wants
-MCP tools to post, message, react, follow, edit, or delete. Writes execute
-immediately; the MCP client owns confirmation before calling them.
+The default grant includes read and write scopes. The OAuth consent screen lists
+the exact scopes before they are granted. Writes execute immediately; the MCP
+client owns confirmation before calling them.
 
 ## Troubleshooting
 
