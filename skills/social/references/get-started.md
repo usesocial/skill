@@ -16,7 +16,7 @@ well under the $5 line — so run it when it helps, and mention the spend.
 
 ## The shape of onboarding
 
-`social account login` and `social account connect <platform>` are **pollable
+`social account setup` and `social account connect <platform>` are **pollable
 state machines** in a non-TTY (agent) shell. Each call advances one step and
 returns a tagged `status`; you call again to advance. Nothing blocks waiting for
 the human — the human approves in their browser on their own time, and your next
@@ -39,23 +39,23 @@ social account 2>&1 | head -c 600
   `brew install usesocial/tap/cli`). Then re-run the check.
 - Otherwise read `.status` and continue to Step 2.
 
-## Step 2 — Sign in (non-TTY poll loop)
+## Step 2 — Set up the Social account (non-TTY poll loop)
 
-In an agent shell, `social account login` runs the device-authorization flow as a
+In an agent shell, `social account setup` runs the device-authorization flow as a
 poll. The states:
 
 | `.status`          | Meaning                                   | What you do |
 | ------------------ | ----------------------------------------- | ----------- |
-| `logged_in`        | Already signed in.                        | Go to Step 3. |
-| `already_logged_in`| Existing valid session.                   | Go to Step 3. |
 | `pending_approval` | Device flow started; awaiting approval.   | Surface `verificationURL` to the human; poll again. |
-| `expired`          | The code lapsed before approval.          | Re-run `login` to restart cleanly. |
+| `pending_billing`  | Authentication is complete; billing is required. | Surface `checkoutURL`; poll again after checkout. |
+| `ready`            | Authentication and base billing are ready. | Go to Step 3. |
+| `expired`          | The code lapsed before approval.          | Re-run `setup` to restart cleanly. |
 | `error`            | Surface `.message`; stop.                 | |
 
 First call starts the flow:
 
 ```bash
-social account login
+social account setup
 ```
 
 A `pending_approval` response looks like:
@@ -67,7 +67,7 @@ A `pending_approval` response looks like:
   "userCode": "WXYZ-1234",
   "expiresAt": "2026-06-12T00:30:00.000Z",
   "scope": "read,write",
-  "nextCommands": ["social account login"]
+  "nextCommands": ["social account setup"]
 }
 ```
 
@@ -79,21 +79,21 @@ Then poll. Re-run the same command on a gentle interval (every ~5s, capped) unti
 the status changes:
 
 ```bash
-social account login   # call again; same JSON contract, advanced one step
+social account setup   # call again; same JSON contract, advanced one step
 ```
 
-When it returns `logged_in`, sign-in is done. If it returns `expired`, tell the
-user the code lapsed and re-run `login` to issue a fresh `verificationURL`.
+If it returns `pending_billing`, surface `checkoutURL` and ask the user to finish
+checkout, then continue polling the same command. Continue only after `ready`.
+If it returns `expired`, tell the user the code lapsed and re-run `setup` to
+issue a fresh `verificationURL`.
 
-Default scope is `read,write` (needed to connect and post). Pass
-`--scope read` for a read-only session.
-
-Do **not** background `login`, pipe `yes` into it, or loop it without a cap.
+The setup grant defaults to `read,write`, which is required for onboarding.
+Do **not** background `setup`, pipe `yes` into it, or loop it without a cap.
 
 ## Step 3 — Connect a platform
 
-`login` authenticates the user against the social API; each platform needs its
-own connection. Like login, connect is pollable in a non-TTY shell:
+`setup` prepares the Social account; each platform still needs its own
+connection. Like setup, connect is pollable in a non-TTY shell:
 
 ```bash
 social account connect linkedin   # or: social account connect x

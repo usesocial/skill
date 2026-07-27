@@ -64,11 +64,11 @@ social account 2>&1 | head -c 600
 Interpret the output:
 
 - `command not found: social` - ask the user to run `curl -fsSL https://usesocial.dev/install.sh | bash` in an interactive terminal.
-- `"status": "logged_out"` or `"expired"` - run `social account login`. In an agent shell it is a non-blocking poll: the first call returns `{ "status": "pending_approval", "verificationURL", ... }` - surface `verificationURL` to the user, then call `login` again on a gentle interval until `"status": "logged_in"` (or `"expired"`, which means re-run to restart). See `references/get-started.md`.
+- `"status": "logged_out"` or `"expired"` - run `social account setup`. In an agent shell it is a non-blocking poll: surface `verificationURL` for `"pending_approval"`, surface `checkoutURL` for `"pending_billing"`, then call `setup` again on a gentle interval until `"status": "ready"` (or `"expired"`, which means re-run to restart). See `references/get-started.md`.
 - `"status": "logged_in"` with a connected-account row for the platform - ready.
 - Logged in but no row for the platform - run `social account connect linkedin`, `social account connect instagram`, or `social account connect x`. In an agent shell it is also a poll: it returns `{ "status": "pending_billing", "paymentURL" }` when a seat must be activated, `{ "status": "pending_approval", "connectURL" }` until the user approves in the browser, then `{ "status": "connected", "account" }`. Surface the URL and call again to advance.
 
-Read `.status` from the JSON, not the exit code. Do not background `login` or `connect`, pipe `yes` into them, or poll them without a cap.
+Read `.status` from the JSON, not the exit code. Do not background `setup` or `connect`, pipe `yes` into them, or poll them without a cap.
 
 Full setup detail lives in `references/setup.md`.
 
@@ -250,7 +250,7 @@ Exit codes:
 | `0` | Success | Continue. |
 | `2` | Usage or validation error | Fix the command, flags, IDs, JSON body, or local input. |
 | `3` | Not found | Check the ID or select a different resource. |
-| `4` | Auth or scope error | Run `social account login`, or log out and choose the needed scope. |
+| `4` | Auth or scope error | Run `social account setup`, or log out and choose the needed scope. |
 | `5` | API, proxy, or unexpected error | Retry later or surface the server error. |
 | `7` | Rate limited | Back off; use `retryAfterSeconds`, `resumeAt`, and `retryCommand` when present. |
 

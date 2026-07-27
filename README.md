@@ -7,8 +7,8 @@ An agent skill for the [`@usesocial/cli`](https://www.npmjs.com/package/@usesoci
 One `social` skill spanning all supported platforms, with progressive-disclosure references loaded only when needed. It auto-triggers on natural intent ("search LinkedIn", "my Instagram DMs", "my saved X posts") and is also invokable as `/social`.
 
 - **`skills/social/SKILL.md`** → `/social` — the shared spine: when to use it, first-use setup probe, invocation conventions, feedback mode, billing, safety, and how to pick a platform reference.
-- **`skills/social/references/get-started.md`** — guided onboarding: install check, login, connect, and first sync with explicit cost consent.
-- **`skills/social/references/setup.md`** — install, `social account login`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting.
+- **`skills/social/references/get-started.md`** — guided onboarding: install check, account setup, provider connection, and first sync with explicit cost consent.
+- **`skills/social/references/setup.md`** — install, `social account setup`, account `connect`, scopes/billing, env vars, error catalog, troubleshooting.
 - **`skills/social/references/mcp.md`** — hosted MCP URL, OAuth login/consent flow, scopes, and client troubleshooting.
 - **`skills/social/references/import.md`** — local SQLite import playbooks for complete already-downloaded exports.
 - **`skills/social/references/linkedin.md`** — full LinkedIn command catalog, flags, output shapes, `jq` recipes, and end-to-end playbooks.

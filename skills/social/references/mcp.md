@@ -59,6 +59,11 @@ The default grant includes read and write scopes. The OAuth consent screen lists
 the exact scopes before they are granted. Writes execute immediately; the MCP
 client owns confirmation before calling them.
 
+After OAuth authorization, call `account_setup` with no arguments. It reports
+`pending_billing` with a checkout URL until base billing is established, then
+`ready`. Preserve its `user`, `scope`, and exact `capabilities`; follow the
+structured `nextTools` rather than inventing CLI commands.
+
 ## Troubleshooting
 
 - **No browser opens:** click the client's connect/authenticate control or invoke

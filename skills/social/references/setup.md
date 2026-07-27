@@ -10,7 +10,7 @@ Run the hosted setup command in an interactive terminal:
 curl -fsSL https://usesocial.dev/install.sh | bash
 ```
 
-It prefers Bun, then falls back to npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social account login`. The package publishes the `social` binary (ESM, Node >= 22.5). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
+It prefers Bun, then falls back to npm. It installs the public skill with `bunx skills add usesocial/skill` or `npx skills add usesocial/skill`, then starts `social account setup`. The package publishes the `social` binary (ESM, Node >= 22.5). If the binary is missing after install, surface the install log — usually a permissions error on the global prefix.
 
 Homebrew is also supported: `brew install usesocial/tap/cli` installs the same binary (skill and login are then manual).
 
@@ -61,16 +61,13 @@ social --version
 social --help
 ```
 
-## `social account login`
+## `social account setup`
 
-`account login` runs the better-auth **device-authorization** flow. Its behavior
-depends on the shell:
+`account setup` completes Social authentication and base billing readiness. Its
+behavior depends on the shell:
 
-**Interactive terminal.** Fully guided: choose Read or Read + Write, enter email
-and phone, click the emailed magic link, approve the browser request, and confirm
-billing checkout if a seat is needed. The CLI sends the magic link with the
-device approval screen attached, then blocks until the web session approves. Ask
-the user to run it directly; do not pipe `yes` into it.
+**Interactive terminal.** Fully guided authentication followed by the same
+backend billing-readiness check used by non-interactive CLI and MCP clients.
 
 **Agent / non-TTY shell.** A non-blocking **state machine** that advances one step
 per call - a skill can poll it. It never prompts and never blocks waiting for the
@@ -78,22 +75,24 @@ human. The states (read `.status`, not the exit code):
 
 | `.status`           | Meaning                                            | Next step |
 | ------------------- | -------------------------------------------------- | --------- |
-| `pending_approval`  | Device flow started; awaiting browser approval.    | Surface `verificationURL` to the user; call `login` again to poll. |
-| `logged_in`         | Approved; credentials stored.                      | Continue to connect. |
-| `already_logged_in` | A valid session already exists.                    | Continue. |
-| `expired`           | The device code lapsed before approval (exit `4`). | Re-run `login` to issue a fresh code. |
+| `pending_approval`  | Device flow started; awaiting browser approval.    | Surface `verificationURL`; call `setup` again to poll. |
+| `pending_billing`   | Authentication is complete; base billing is required. | Surface `checkoutURL`; call `setup` again after checkout. |
+| `ready`             | Authentication and base billing are ready.         | Continue to provider connection. |
+| `expired`           | The device code lapsed before approval (exit `4`). | Re-run `setup` to issue a fresh code. |
+| `needs_input`       | Interactive input was required but unavailable.    | Surface `.reason`; rerun appropriately. |
 | `error`             | Surface `.message`; stop.                          | |
 
 The first call returns `pending_approval` with `verificationURL`, `userCode`,
 `expiresAt`, and `scope`. The human opens `verificationURL`, where the browser
 collects their email and approves the session - the CLI never asks the agent for
-an email, phone, magic link, or bearer. Default scope is `read,write`; pass
-`--scope read` for read-only. The in-flight device code is persisted to
+an email, phone, magic link, or bearer. The setup grant defaults to
+`read,write`. The in-flight device code is persisted to
 `~/.social/device-login.json` (mode `0600`) between calls and removed once the
-flow resolves. Phone capture is interactive-only and best-effort. Billing-seat
-acquisition is a separate concern (surfaced by `social account` seats), not part
-of the non-TTY login states. **Do not background `login`, pipe `yes` into it, or
-poll it without a cap.** The full onboarding walk-through is in
+flow resolves. Phone capture is interactive-only and best-effort. Once
+authenticated, setup returns the backend's safe user, normalized scope, exact
+capabilities, and seat summary in both `pending_billing` and `ready` states.
+**Do not background `setup`, pipe `yes` into it, or poll it without a cap.**
+The full onboarding walk-through is in
 `references/get-started.md`.
 
 After success, credentials live in the OS keyring (service `social-cli`) with a fallback at `~/.social/credentials.json` (mode `0600`). Sessions last two years unless revoked. `social account logout` clears both.
@@ -104,7 +103,8 @@ Use `social account billing` for the current seat, subscription, and usage-billi
 
 ## Connecting a platform account
 
-`account login` only authenticates the user against the social API. Each platform needs its own connection handshake:
+`account setup` authenticates the user and establishes base billing. Each
+platform still needs its own connection handshake:
 
 ```bash
 social account connect linkedin    # LinkedIn connection URL
@@ -112,7 +112,7 @@ social account connect instagram   # Instagram connection URL
 social account connect x           # X OAuth handshake
 ```
 
-Like login, agent/non-TTY connect is a non-blocking **state machine** - one step
+Like setup, agent/non-TTY connect is a non-blocking **state machine** - one step
 per call, no waiting:
 
 | `.status`          | Meaning                              | Next step |
@@ -163,7 +163,7 @@ Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
 ```bash
 social account logout
-social account login
+social account setup
 ```
 
 Choose Read + Write in the login prompt.
@@ -238,8 +238,8 @@ window.
 
 | Code                                                 | Meaning                                           | Fix                                                                      |
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
-| `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account login`.                                                  |
-| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account login` and choose Read + Write. |
+| `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account setup`.                                                  |
+| `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account setup` and choose Read + Write. |
 | `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin`, `social account connect instagram`, or `social account connect x`. |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed username/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
@@ -255,8 +255,8 @@ window.
 | Symptom                             | Likely cause                                     | Fix                                                                          |
 | ----------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
-| `Not signed in` / `unauthenticated` | No token or expired.                             | `social account login`.                                                      |
-| `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account login` and choose Read + Write. |
+| `Not signed in` / `unauthenticated` | No token or expired.                             | `social account setup`.                                                      |
+| `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account setup` and choose Read + Write. |
 | `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect instagram` / `social account connect x`. |
 | Browser fails to open               | WSL or headless.                                 | Re-run from the agent/non-TTY context and surface the printed URL to the user. |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
