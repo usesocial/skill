@@ -59,10 +59,20 @@ The default grant includes read and write scopes. The OAuth consent screen lists
 the exact scopes before they are granted. Writes execute immediately; the MCP
 client owns confirmation before calling them.
 
-After OAuth authorization, call `account_setup` with no arguments. It reports
-`pending_billing` with a checkout URL until base billing is established, then
-`ready`. Preserve its `user`, `scope`, and exact `capabilities`; follow the
-structured `nextTools` rather than inventing CLI commands.
+After OAuth authorization, call `account_setup` with no arguments. This tool is
+a mutation because it uses Autumn `setupPayment` to authorize a reusable card.
+If it returns `pending_billing`, surface `checkoutURL` and invoke the exact
+`account_setup` entry in `nextTools` after approval. Setup never selects or
+purchases a provider plan. Once ready, preserve `user`, `scope`, and exact
+`capabilities`, then follow its provider-specific `nextTools`.
+
+`account_connect` accepts `{ platform, attemptId? }` and can charge the stored
+card for only that provider's plan or next seat, or the applicable legacy Social
+Pro seat during transition. Omit `attemptId` on the first
+call, then use the exact returned ID from every `nextTools` retry. Surface
+`paymentURL` only when `pending_billing` requires customer action; after that,
+surface the hosted `connectURL` from `pending_approval`. Replaying a completed
+ID is stable. Omit the ID after completion only to connect another account.
 
 ## Troubleshooting
 

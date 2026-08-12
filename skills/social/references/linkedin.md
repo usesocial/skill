@@ -1,6 +1,6 @@
 # LinkedIn - `social linkedin`
 
-Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend usage, writes act.
+Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it locally, named reads hit the live network under flat LinkedIn proxy usage, and writes act.
 
 `social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. `page visitors` has no pagination. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
 
@@ -12,7 +12,7 @@ requests, reactions, comments, posts, and proxy calls.
 
 | Command | Purpose |
 | --- | --- |
-| `social account connect linkedin` | Browser connection flow. Opens the web app on a TTY; prints the URL on non-TTY. |
+| `social account connect linkedin [--attempt <id>]` | Purchases one LinkedIn seat, then runs hosted connection. In non-TTY shells, omit the flag first and reuse the returned `attemptId` on every poll. |
 | `social account reconnect linkedin <account>` | Re-auth an existing account. |
 | `social account disconnect linkedin <account>` | Disconnect an account. |
 | `social account` | Inspect authenticated user and connected accounts. |
@@ -22,12 +22,12 @@ requests, reactions, comments, posts, and proxy calls.
 | Command | Args | Notes |
 | --- | --- | --- |
 | `profile [target]` | `--with-sections <csv>`, `--variant <name>`, `--account`, `-H/--header` | Connected profile by default. Target accepts `@public-identifier`, profile URL, profile URN, or `profile_id:<id>`. |
-| `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, metered, target required. Target accepts profile/company username, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
+| `posts <target>` | `--limit`, `--cursor`, `--account`, `-H/--header` | Live, flat-usage, target required. Target accepts profile/company username, URL, URN, `profile_id:<id>`, or `company_id:<id>`. |
 | `comments <post>` | `--limit 1-100`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--account`, `-H/--header` | Comments on a post. |
 | `reactions <post>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
 | `company <company>` | `--account`, `-H/--header` | Company by `company_id:<id>`, company URL, or organization URN. |
 | `jobs <company>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Job postings for a company. |
-| `connections <target>` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live and metered; target required. For your own graph, run `social linkedin sync connections`, then query `li_connections` with SQL. |
+| `connections <target>` | `--limit`, `--cursor` from `.meta.cursor`, `--filter`, `--account`, `-H/--header` | A user's connection graph, live under flat usage; target required. For your own graph, run `social linkedin sync connections`, then query `li_connections` with SQL. |
 
 Live reads are for fresh data or someone else's graph. Your own graph is sync+sql: `social linkedin sync connections`, then query `li_connections`.
 
@@ -35,7 +35,7 @@ Live reads are for fresh data or someone else's graph. Your own graph is sync+sq
 
 ## Search
 
-Search is live, metered, offset-paginated, and visible in help/schema.
+Search is live, covered by flat LinkedIn proxy usage, offset-paginated, and visible in help/schema.
 
 | Command | Args | Notes |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ social account config page company_id:<company-id>
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `page visitors` | `--since <ISO>`, `--until <ISO>`, `--page <company>`, `--account` | Company Page visitor analytics. Live, metered, premium analytics; state the cost, and confirm first if the estimate reaches $5. |
+| `page visitors` | `--since <ISO>`, `--until <ISO>`, `--page <company>`, `--account` | Company Page visitor analytics. Live and covered by flat LinkedIn proxy usage. |
 | `page invite <user...>` | `--page <company>`, `--account` | Invite users to follow the selected Page. Targets accept `@username`, `profile_id:<id>`, profile URL, or profile URN. Outbound write; no message body. |
 
 ```bash
@@ -138,7 +138,7 @@ social linkedin sync messages --since 2026-05-04 --timeout 900
 social linkedin sql
 ```
 
-`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls; it spends less usage. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
+`--since` limits a sync to newer items using an ISO date like `2026-05-04` or datetime like `2026-05-04T00:00:00Z` on collections whose bare-sync row shows `supportsSince: true`. Prefer it over full re-pulls because it does less provider work. `--reset` deletes the collection's local rows and sync state; the next plain sync rebuilds from scratch.
 
 Successful write commands update synced collections immediately: `requests cancel` and `requests accept` prune the matching `li_requests` row, and `message` inserts the sent row into `li_messages` once messages has synced at least once.
 

@@ -63,11 +63,11 @@ social --help
 
 ## `social account setup`
 
-`account setup` completes Social authentication and base billing readiness. Its
+`account setup` completes Social authentication. Its
 behavior depends on the shell:
 
 **Interactive terminal.** Fully guided authentication followed by the same
-backend billing-readiness check used by non-interactive CLI and MCP clients.
+readiness check used by non-interactive CLI and MCP clients.
 
 **Agent / non-TTY shell.** A non-blocking **state machine** that advances one step
 per call - a skill can poll it. It never prompts and never blocks waiting for the
@@ -76,8 +76,8 @@ human. The states (read `.status`, not the exit code):
 | `.status`           | Meaning                                            | Next step |
 | ------------------- | -------------------------------------------------- | --------- |
 | `pending_approval`  | Device flow started; awaiting browser approval.    | Surface `verificationURL`; call `setup` again to poll. |
-| `pending_billing`   | Authentication is complete; base billing is required. | Surface `checkoutURL`; call `setup` again after checkout. |
-| `ready`             | Authentication and base billing are ready.         | Continue to provider connection. |
+| `pending_billing`   | A reusable payment method is not ready.            | Surface `checkoutURL`; call `setup` again after card authorization. |
+| `ready`             | Authentication and card setup are complete.        | Continue to provider connection. |
 | `expired`           | The device code lapsed before approval (exit `4`). | Re-run `setup` to issue a fresh code. |
 | `needs_input`       | Interactive input was required but unavailable.    | Surface `.reason`; rerun appropriately. |
 | `error`             | Surface `.message`; stop.                          | |
@@ -89,8 +89,11 @@ an email, phone, magic link, or bearer. The setup grant defaults to
 `read,write`. The in-flight device code is persisted to
 `~/.social/device-login.json` (mode `0600`) between calls and removed once the
 flow resolves. Phone capture is interactive-only and best-effort. Once
-authenticated, setup returns the backend's safe user, normalized scope, exact
-capabilities, and seat summary in both `pending_billing` and `ready` states.
+authenticated, setup calls Autumn `setupPayment`. It returns `pending_billing`
+with `checkoutURL` until the user authorizes a reusable card; the checkout never
+selects, attaches, or purchases a provider plan. Once the payment method is
+ready, setup returns the backend's safe user, normalized scope, exact
+capabilities, and provider connection choices.
 **Do not background `setup`, pipe `yes` into it, or poll it without a cap.**
 The full onboarding walk-through is in
 `references/get-started.md`.
@@ -99,16 +102,19 @@ After success, credentials live in the OS keyring (service `social-cli`) with a 
 
 Use bare `social account` to inspect auth state and connected accounts. It always prints compact JSON with `status`, credential namespace/path, verified session data when available, connected account rows, and seat counts when the session is online.
 
-Use `social account billing` for the current seat, subscription, and usage-billing snapshot. Use `social account billing portal` to print the hosted billing portal URL; it prints `{ "url": "...", "opened": false }`, so agents can hand the URL to the user.
+Use `social account billing` for the Social LinkedIn and Social X subscription,
+connected-account, and X credit snapshot. Use `social account billing portal`
+to print the hosted billing portal URL; it prints `{ "url": "...", "opened":
+false }`, so agents can hand the URL to the user.
 
 ## Connecting a platform account
 
-`account setup` authenticates the user and establishes base billing. Each
-platform still needs its own connection handshake:
+`account setup` authenticates the user and authorizes a reusable payment method.
+Each platform connect command then starts its own billing-and-connection
+attempt:
 
 ```bash
 social account connect linkedin    # LinkedIn connection URL
-social account connect instagram   # Instagram connection URL
 social account connect x           # X OAuth handshake
 ```
 
@@ -117,22 +123,38 @@ per call, no waiting:
 
 | `.status`          | Meaning                              | Next step |
 | ------------------ | ------------------------------------ | --------- |
-| `pending_billing`  | A billing seat must be activated.    | Surface `paymentURL`; call `connect` again after checkout. |
-| `pending_approval` | No account linked yet.               | Surface `connectURL`; call `connect` again to poll. |
-| `connected`        | Account is linked (`.account`).      | Done. |
+| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `attemptId`. |
+| `pending_approval` | No account linked yet.               | Surface `connectURL`; retry with the returned `attemptId`. |
+| `connected`        | Account is linked (`.account`).      | Done; exact-ID replay returns this result. |
 
-The first call may return `{ status: "pending_billing", platform, paymentURL }`
-and print `Open this URL: <url>`; surface `paymentURL`, have the user complete
-checkout, then call `connect` again. Once billing is ready, connect returns
-`{ status: "pending_approval", platform, connectURL }` and prints
+Terminal attempt responses include a machine-readable `.code` and `.retryable`;
+surface the code and never silently start another purchase.
+
+The first call without `--attempt` resumes an active unexpired attempt or creates
+one, purchasing only the selected provider's plan or next seat, or the
+applicable legacy Social Pro seat during transition. It normally
+charges the payment method established during setup and returns
+`{ status: "pending_billing", attemptId, platform, paymentURL }` only when the
+bank requires customer action. Capture `attemptId`, surface `paymentURL`, have
+the user approve the payment, then call
+`social account connect <platform> --attempt <attemptId>`. Social LinkedIn costs $20
+per connected LinkedIn account per month with flat proxy usage and no credits or
+top-ups. Social X costs $20 per connected X account per month, includes 15,000
+credits with one-month rollover, and offers $15 top-ups for another 15,000
+credits. Both subscriptions can coexist. Once billing is ready, connect returns
+`{ status: "pending_approval", attemptId, platform, connectURL }` and prints
 `Open this URL: <url>`; surface `connectURL` to the user, have them approve in
-the browser/profile they want to use, then call `connect` again. Interactive
+the browser/profile they want to use, then call `connect` again with the same
+ID. Replaying a completed ID is stable; omit `--attempt` after completion only
+to connect another account. Interactive
 connect prints the same URL and polls until the connection appears in bare
 `social account`. Once the account appears it returns
-`{ status: "connected", platform, account }`. Bare `social account` also shows
-the connected-account row. `reconnect` remains the interactive blocking flow. Instagram and LinkedIn use Unipile hosted auth; web connect lives at `/connect/instagram` and `/connect/linkedin`. For X,
-the bearer is requested with full scopes; the bearer-session `cliGrant` decides
-usage scope at request time.
+`{ status: "connected", attemptId, platform, account }`. Bare `social account`
+also shows the connected-account row. `reconnect` remains the interactive
+blocking flow, carries no connect-attempt ID, and does not change billing.
+LinkedIn uses Unipile hosted auth; web connect lives at `/connect/linkedin`. For
+X, the bearer is requested with full scopes; the bearer-session `cliGrant`
+decides usage scope at request time.
 
 To swap accounts:
 
@@ -140,10 +162,6 @@ To swap accounts:
 social account
 social account disconnect linkedin <@username|profile_id:<id>>
 social account reconnect linkedin <@username|profile_id:<id>>
-
-social account
-social account disconnect instagram <@username|profile_id:<id>>
-social account reconnect instagram <@username|profile_id:<id>>
 
 social account
 social account disconnect x <@username|profile_id:<id>>
@@ -157,7 +175,8 @@ The bearer token carries one of:
 - `read` — list/get only.
 - `read,write` — adds POST/PUT/DELETE proxy capabilities.
 
-`read,write` already covers LinkedIn Page invites, LinkedIn raw proxy writes, and Instagram writes; there is no separate Page or Instagram scope.
+`read,write` already covers LinkedIn Page invites and LinkedIn raw proxy writes;
+there is no separate Page scope.
 
 Mismatch surfaces as `scope_missing` (HTTP 403). Fix:
 
@@ -174,9 +193,9 @@ Every command accepts `--account <@username|profile_id:<id>>`. Without it the CL
 
 ## Caching
 
-Allowlisted GET reads use the proxy cache by default. Cache hits are free because
-they skip the upstream provider call. Fresh upstream reads and writes are still
-metered.
+Allowlisted GET reads use the proxy cache by default. X cache hits spend no
+credits because they skip the upstream provider call. LinkedIn proxy usage is
+flat whether or not a read hits the cache.
 
 The default cache TTL is 15 minutes. Configure the local default in seconds:
 
@@ -240,14 +259,14 @@ window.
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account setup`.                                                  |
 | `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account setup` and choose Read + Write. |
-| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin`, `social account connect instagram`, or `social account connect x`. |
+| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`. |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed username/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
-| `billing_seat_timed_out`                             | Seat bump/payment action did not complete.        | Finish the printed billing URL, then re-run `social account connect <platform>`. |
+| `billing_seat_timed_out`                             | Seat purchase/payment action did not complete.    | Finish the printed billing URL, then resume with `social account connect <platform> --attempt <attemptId>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
-| `linkedin_connect_timed_out` / `instagram_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Re-run `social account connect <platform>`.                              |
+| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Follow the terminal attempt's `retryable` guidance; do not silently start another purchase. |
 | `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the username/id.                                                       |
 
 ## Troubleshooting
@@ -257,7 +276,7 @@ window.
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
 | `Not signed in` / `unauthenticated` | No token or expired.                             | `social account setup`.                                                      |
 | `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account setup` and choose Read + Write. |
-| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect instagram` / `social account connect x`. |
+| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect x`. |
 | Browser fails to open               | WSL or headless.                                 | Re-run from the agent/non-TTY context and surface the printed URL to the user. |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
 

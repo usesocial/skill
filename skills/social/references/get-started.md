@@ -1,18 +1,18 @@
 # Get started with /social
 
 The guided first-run flow: install check → sign in → connect a platform → first
-sync. This is the home of the **skill-owns-consent** pattern — the CLI never
-prompts and never blocks on approval, so *you* (the agent) estimate cost, state
-it, and get the human's explicit yes before anything estimated at $5 or more.
-Cheaper metered steps just run, with the spend reported afterward.
+sync. This is the home of the **skill-owns-consent** pattern for X credits — the
+CLI never prompts and never blocks on approval, so *you* (the agent) estimate X
+cost, state it, and get the human's explicit yes before anything estimated at $5
+or more. LinkedIn proxy usage is flat.
 The policy core lives in `SKILL.md`; this reference applies it to first-run
 onboarding.
 
 Run it when the user says "let's get started with /social", "set me up", "log me
 in", or asks to connect LinkedIn/X for the first time. The install/account
 checks, login polling, and connect polling below are free, non-blocking checks.
-A metered live read used to size the first sync (a profile lookup) costs cents —
-well under the $5 line — so run it when it helps, and mention the spend.
+An X live read used to size the first sync costs cents, so run it when it helps
+and mention the spend. A LinkedIn read needs no cost estimate.
 
 ## The shape of onboarding
 
@@ -47,8 +47,8 @@ poll. The states:
 | `.status`          | Meaning                                   | What you do |
 | ------------------ | ----------------------------------------- | ----------- |
 | `pending_approval` | Device flow started; awaiting approval.   | Surface `verificationURL` to the human; poll again. |
-| `pending_billing`  | Authentication is complete; billing is required. | Surface `checkoutURL`; poll again after checkout. |
-| `ready`            | Authentication and base billing are ready. | Go to Step 3. |
+| `pending_billing`  | A reusable payment method is not ready.   | Surface `checkoutURL`; poll again after card authorization. |
+| `ready`            | Authentication and card setup are complete. | Go to Step 3. |
 | `expired`          | The code lapsed before approval.          | Re-run `setup` to restart cleanly. |
 | `error`            | Surface `.message`; stop.                 | |
 
@@ -82,18 +82,25 @@ the status changes:
 social account setup   # call again; same JSON contract, advanced one step
 ```
 
-If it returns `pending_billing`, surface `checkoutURL` and ask the user to finish
-checkout, then continue polling the same command. Continue only after `ready`.
 If it returns `expired`, tell the user the code lapsed and re-run `setup` to
 issue a fresh `verificationURL`.
+
+After authentication, setup can return `pending_billing` with `checkoutURL`.
+Surface that URL so the user can authorize a reusable card through Autumn
+`setupPayment`, then poll `social account setup` again until it returns `ready`.
+This checkout does not select, attach, or purchase a provider plan.
 
 The setup grant defaults to `read,write`, which is required for onboarding.
 Do **not** background `setup`, pipe `yes` into it, or loop it without a cap.
 
 ## Step 3 — Connect a platform
 
-`setup` prepares the Social account; each platform still needs its own
-connection. Like setup, connect is pollable in a non-TTY shell:
+`setup` authenticates the Social account and establishes the reusable payment
+method. The platform-specific connect attempt purchases only that provider's
+plan or next seat, or the applicable legacy Social Pro seat during transition,
+normally charging the stored card directly. Connect returns
+a payment URL only when the bank requires customer action. Like setup, connect
+is pollable in a non-TTY shell:
 
 ```bash
 social account connect linkedin   # or: social account connect x
@@ -101,25 +108,44 @@ social account connect linkedin   # or: social account connect x
 
 | `.status`          | Meaning                                  | What you do |
 | ------------------ | ---------------------------------------- | ----------- |
-| `connected`        | Account is linked.                       | Done; show `.account.username`. |
-| `pending_billing`  | A billing seat must be activated first.  | Surface `paymentURL`; poll again after checkout. |
-| `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; poll again. |
+| `connected`        | Account is linked.                       | Done; show `.account.username`. Replaying this `attemptId` is stable. |
+| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `attemptId`. |
+| `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; retry with the returned `attemptId`. |
 
-A `pending_billing` response carries a `paymentURL` when checkout is needed.
-Surface it to the human, have them complete checkout, then call connect again.
+Terminal attempt responses include a machine-readable `.code` and `.retryable`;
+surface the code and never silently start another purchase.
+
+A first call without `--attempt` resumes the active unexpired attempt or creates
+one. Capture `attemptId` from every response, then retry only that operation:
+
+```bash
+social account connect linkedin --attempt <attemptId>
+```
+
+A `pending_billing` response carries a `paymentURL` only when the bank requires
+customer action, such as 3-D Secure. Surface it to the human, have them approve
+the payment, then call connect again with the same `attemptId`.
 A `pending_approval` response carries a `connectURL` — surface it to the human,
 ask them to approve in the browser/profile they want to use, then call connect
-again to advance. When it returns `connected`, confirm the linked `@username`.
+again with the same ID. When it returns `connected`, confirm the linked
+`@username`. Replaying that completed ID returns the same result; omit
+`--attempt` only when the user wants to connect another account.
 
-Re-run bare `social account` any time to confirm a connected-account row exists
-for the platform.
+Social LinkedIn is $20 per connected LinkedIn account per month with flat proxy
+usage and no credits or top-ups. Social X is $20 per connected X account per
+month with 15,000 credits, one-month rollover, and $15 top-ups for another
+15,000 credits. The plans coexist; two accounts on each provider cost $80 per
+month and include 30,000 X credits. Re-run bare `social account` any time to
+confirm a connected-account row exists for the platform.
 
 ## Step 4 — First sync, with the consent pattern
 
-This is the one step that spends real usage. The pattern is always:
+For X, this is the first step that can spend credits. The pattern is:
 **estimate → state → confirm (at $5+) → run → verify.** A full-graph first sync
 usually clears $5 easily; a small targeted sync (say, just DMs) often does not,
-and can run once you have stated the estimate.
+and can run once you have stated the estimate. LinkedIn proxy usage is flat, so
+skip the cost estimate and cost confirmation for LinkedIn reads; write and
+destructive confirmations still apply.
 
 ### 1. Estimate
 
@@ -133,14 +159,13 @@ rough until the first sync reports the exact spend.
 social schema "x sync" | jq '.cost'
 ```
 
-For LinkedIn use `social schema "linkedin sync"`. If you need a fresher count
-than the user or local metadata can provide, `social x profile --account
-<@username>` and `social linkedin profile --account <@username>` are metered
-live reads costing cents; run one to improve the estimate and mention the spend.
+If you need a fresher X count than the user or local metadata can provide,
+`social x profile --account <@username>` is a metered live read; run it to
+improve the estimate and mention the spend.
 
 ### 2. State the estimate
 
-Tell the human, in plain language, what the sync will pull and roughly what it
+Tell the human, in plain language, what the X sync will pull and roughly what it
 will cost — e.g. "Syncing your ~4,200 X followers reads each one upstream and is
 metered in usage dollars; at $0.015/item, that's roughly $63 before cache effects.
 Want me to run it?" Be honest that it is an estimate; the exact spend appears in
@@ -191,6 +216,7 @@ The user is now set up. Hand off to the platform references for day-to-day work:
 The consent pattern from Step 4 applies beyond the first sync: for any
 usage-spending command, estimate and state the cost, and get a yes when the
 estimate — for one command, or the task's metered commands taken together —
-reaches $5. `destructive` and `outbound_write` hazards are always confirmed,
-regardless of cost. See the hazard vocabulary in `SKILL.md`; hazards are
+reaches $5. LinkedIn reads have flat proxy usage and skip this cost gate.
+`destructive` and `outbound_write` hazards are always confirmed, regardless of
+cost. See the hazard vocabulary in `SKILL.md`; hazards are
 advisory signals that *you* act on — the CLI itself never gates.
