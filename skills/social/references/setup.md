@@ -138,8 +138,9 @@ charges the payment method established during setup and returns
 bank requires customer action. Capture `attemptId`, surface `paymentURL`, have
 the user approve the payment, then call
 `social account connect <platform> --attempt <attemptId>`. Social LinkedIn costs $20
-per connected LinkedIn account per month with flat proxy usage and no credits or
-top-ups. Social X costs $20 per connected X account per month, includes 15,000
+per connected LinkedIn account per month. Every LinkedIn read, sync, and write is
+covered by that seat, with no credits, top-ups, or per-action charges. Social X
+costs $20 per connected X account per month, includes 15,000
 credits with one-month rollover, and offers $15 top-ups for another 15,000
 credits. Both subscriptions can coexist. Once billing is ready, connect returns
 `{ status: "pending_approval", attemptId, platform, connectURL }` and prints
@@ -194,8 +195,8 @@ Every command accepts `--account <@username|profile_id:<id>>`. Without it the CL
 ## Caching
 
 Allowlisted GET reads use the proxy cache by default. X cache hits spend no
-credits because they skip the upstream provider call. LinkedIn proxy usage is
-flat whether or not a read hits the cache.
+credits because they skip the upstream provider call. LinkedIn reads have no
+per-action charge whether they hit the cache or the upstream provider.
 
 The default cache TTL is 15 minutes. Configure the local default in seconds:
 

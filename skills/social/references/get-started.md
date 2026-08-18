@@ -4,7 +4,7 @@ The guided first-run flow: install check → sign in → connect a platform → 
 sync. This is the home of the **skill-owns-consent** pattern for X credits — the
 CLI never prompts and never blocks on approval, so *you* (the agent) estimate X
 cost, state it, and get the human's explicit yes before anything estimated at $5
-or more. LinkedIn proxy usage is flat.
+or more. LinkedIn reads, syncs, and writes have no per-action charge.
 The policy core lives in `SKILL.md`; this reference applies it to first-run
 onboarding.
 
@@ -12,7 +12,8 @@ Run it when the user says "let's get started with /social", "set me up", "log me
 in", or asks to connect LinkedIn/X for the first time. The install/account
 checks, login polling, and connect polling below are free, non-blocking checks.
 An X live read used to size the first sync costs cents, so run it when it helps
-and mention the spend. A LinkedIn read needs no cost estimate.
+and mention the spend. Never estimate or request approval for LinkedIn action
+costs because the monthly seat covers them.
 
 ## The shape of onboarding
 
@@ -28,7 +29,7 @@ without backgrounding anything.
 ## Step 1 — Install check
 
 Bare `social account` answers install + login + connection in one free call. Do
-not probe with metered live reads.
+not probe with a metered X or Instagram live read.
 
 ```bash
 social account 2>&1 | head -c 600
@@ -131,8 +132,9 @@ again with the same ID. When it returns `connected`, confirm the linked
 `@username`. Replaying that completed ID returns the same result; omit
 `--attempt` only when the user wants to connect another account.
 
-Social LinkedIn is $20 per connected LinkedIn account per month with flat proxy
-usage and no credits or top-ups. Social X is $20 per connected X account per
+Social LinkedIn is $20 per connected LinkedIn account per month. The seat covers
+every LinkedIn read, sync, and write, with no credits, top-ups, or per-action
+charges. Social X is $20 per connected X account per
 month with 15,000 credits, one-month rollover, and $15 top-ups for another
 15,000 credits. The plans coexist; two accounts on each provider cost $80 per
 month and include 30,000 X credits. Re-run bare `social account` any time to
@@ -143,9 +145,9 @@ confirm a connected-account row exists for the platform.
 For X, this is the first step that can spend credits. The pattern is:
 **estimate → state → confirm (at $5+) → run → verify.** A full-graph first sync
 usually clears $5 easily; a small targeted sync (say, just DMs) often does not,
-and can run once you have stated the estimate. LinkedIn proxy usage is flat, so
-skip the cost estimate and cost confirmation for LinkedIn reads; write and
-destructive confirmations still apply.
+and can run once you have stated the estimate. Skip cost estimates and cost
+confirmations for every LinkedIn read, sync, and write; outward and destructive
+confirmations still apply for safety.
 
 ### 1. Estimate
 
@@ -216,7 +218,8 @@ The user is now set up. Hand off to the platform references for day-to-day work:
 The consent pattern from Step 4 applies beyond the first sync: for any
 usage-spending command, estimate and state the cost, and get a yes when the
 estimate — for one command, or the task's metered commands taken together —
-reaches $5. LinkedIn reads have flat proxy usage and skip this cost gate.
+reaches $5. Every LinkedIn action skips this cost gate because the monthly seat
+covers it without a per-action charge.
 `destructive` and `outbound_write` hazards are always confirmed, regardless of
 cost. See the hazard vocabulary in `SKILL.md`; hazards are
 advisory signals that *you* act on — the CLI itself never gates.
