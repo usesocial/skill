@@ -194,7 +194,7 @@ Use `-H` only when help/schema lists `header`.
 | Surface | Pagination | Notes |
 | --- | --- | --- |
 | X live lists | `--limit`, `--cursor` from `.meta.cursor` | Cursor may be absent on the last page. |
-| LinkedIn live lists | `posts` and `connections` use `--limit`, `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit`, `--offset` | Continue cursor reads from cursor; increase offset by page size. |
+| LinkedIn live lists | `posts`, `connections`, and people/company/post search use `--cursor` from `.meta.cursor`; comments, reactions, company jobs, and job search use `--limit`, `--offset` | Continue cursor reads from cursor; increase offset by page size. |
 | Instagram live lists | `--limit`, `--cursor` from `.meta.cursor`; many lists also expose `--offset` fallback | Continue cursor reads from cursor when present. |
 | SQL | none | Use SQL `LIMIT`, `ORDER BY`, and `WHERE`. |
 

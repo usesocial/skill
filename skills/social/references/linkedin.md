@@ -2,7 +2,7 @@
 
 Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it locally, named reads hit the live network, and writes act. Every LinkedIn read, sync, and write is covered by the monthly seat, with no credits, top-ups, or per-action charges. Never request cost approval for a LinkedIn command; outward and destructive actions still require safety confirmation.
 
-`social linkedin <command>`. `posts` and `connections` use `--limit` and `--cursor` from `.meta.cursor`; search, comments, reactions, and jobs use `--limit` and `--offset`. `page visitors` has no pagination. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
+`social linkedin <command>`. `posts`, `connections`, and people/company/post search use `--cursor` from `.meta.cursor`; comments, reactions, company jobs, and job search use `--limit` and `--offset`. `page visitors` has no pagination. Offset totals appear in `.meta.totalCount` when the provider reports one. List output is `.items[]`; single-resource output is `.data`.
 
 LinkedIn command concurrency is always 1. Run one `social linkedin ...` command
 at a time, including syncs, live reads, company Page reads/writes, messages,
@@ -35,19 +35,19 @@ Live reads are for fresh data or someone else's graph. Your own graph is sync+sq
 
 ## Search
 
-Search is live, has no per-action charge, is offset-paginated, and is visible in help/schema. Paginate as far as the task needs without a cost gate, while still capping loops and respecting rate limits.
+Search is live, has no per-action charge, and is visible in help/schema. People, company, and post search use cursors; job search uses offsets. Paginate as far as the task needs without a cost gate, while still capping loops and respecting rate limits.
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `search people <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Find people by keyword. |
-| `search posts <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Find market language, launches, and competitor mentions. |
+| `search people <keywords>` | `--cursor`, `--account`, `-H/--header` | Find people by keyword. |
+| `search posts <keywords>` | `--cursor`, `--account`, `-H/--header` | Find market language, launches, and competitor mentions. |
 | `search jobs <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Find job postings by keyword. |
-| `search companies <keywords>` | `--limit 1-100`, `--offset`, `--account`, `-H/--header` | Find companies by keyword. |
+| `search companies <keywords>` | `--cursor`, `--account`, `-H/--header` | Find companies by keyword. |
 
 ```bash
-social linkedin search posts "agent CLI" --limit 25 --offset 0 \
+social linkedin search posts "agent CLI" \
   | jq '.items[] | {id, text: .text[0:120], url}'
-social linkedin search people "devtools founder" --limit 25 --offset 0
+social linkedin search people "devtools founder"
 ```
 
 People-search fields you can rank on without another live read: `id`, `public_identifier`, `display_name`, `headline`, `location`, `network_distance`, `followers_count`, `relations_count`, `shared_relations_count`, `industry`, `keywords_match`, `is_open_profile`, `is_premium`, `is_verified`, `profile_url`.
@@ -55,7 +55,7 @@ People-search fields you can rank on without another live read: `id`, `public_id
 Live responses keep upstream field names (`display_name`, `public_identifier`, `network_distance`); the normalized `name`/`username`/`distance` names exist only as local SQL view columns.
 
 ```bash
-social linkedin search people "devtools founder" --limit 100 --offset 0 \
+social linkedin search people "devtools founder" \
   | jq '.items | sort_by(-(.followers_count // 0)) | .[] | {display_name, headline, network_distance, followers_count}'
 ```
 
@@ -201,7 +201,7 @@ For sent invitation rows, `user_name` is the useful sparse label; `user_username
 
 ```bash
 # Search.
-social linkedin search posts "agent CLI" --limit 25 --offset 0
+social linkedin search posts "agent CLI"
 
 # Profile/company posts.
 PAGE1=$(social linkedin posts profile_id:<profile-id> --limit 20)
@@ -239,7 +239,7 @@ jq '{cursor: .meta.cursor, totalCount: .meta.totalCount, resolved: .meta.resolve
 Save live outputs before chaining so later steps reuse the same result and avoid unnecessary provider calls:
 
 ```bash
-social linkedin search people "devtools founder" --limit 100 > /tmp/people.json
+social linkedin search people "devtools founder" > /tmp/people.json
 jq '.items | length' /tmp/people.json
 jq -r '.items[].public_identifier // empty' /tmp/people.json | sort -u
 ```
