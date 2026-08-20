@@ -110,8 +110,8 @@ false }`, so agents can hand the URL to the user.
 ## Connecting a platform account
 
 `account setup` authenticates the user and authorizes a reusable payment method.
-Each platform connect command then starts its own billing-and-connection
-attempt:
+Each platform connect command then creates or resumes its own partial
+`connected_accounts` row:
 
 ```bash
 social account connect linkedin    # LinkedIn connection URL
@@ -123,36 +123,36 @@ per call, no waiting:
 
 | `.status`          | Meaning                              | Next step |
 | ------------------ | ------------------------------------ | --------- |
-| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `attemptId`. |
-| `pending_approval` | No account linked yet.               | Surface `connectURL`; retry with the returned `attemptId`. |
+| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `accountId`. |
+| `pending_approval` | No account linked yet.               | Surface `connectURL`; retry with the returned `accountId`. |
 | `connected`        | Account is linked (`.account`).      | Done; exact-ID replay returns this result. |
 
-Terminal attempt responses include a machine-readable `.code` and `.retryable`;
+Terminal connection responses include a machine-readable `.code` and `.retryable`;
 surface the code and never silently start another purchase.
 
-The first call without `--attempt` resumes an active unexpired attempt or creates
-one, purchasing only the selected provider's plan or next seat, or the
-applicable legacy Social Pro seat during transition. It normally
+The first call without `--account-id` resumes an active unexpired partial
+account or creates one, purchasing only the selected provider's plan or next
+seat, or the applicable legacy Social Pro seat during transition. It normally
 charges the payment method established during setup and returns
-`{ status: "pending_billing", attemptId, platform, paymentURL }` only when the
-bank requires customer action. Capture `attemptId`, surface `paymentURL`, have
+`{ status: "pending_billing", accountId, platform, paymentURL }` only when the
+bank requires customer action. Capture `accountId`, surface `paymentURL`, have
 the user approve the payment, then call
-`social account connect <platform> --attempt <attemptId>`. Social LinkedIn costs $20
+`social account connect <platform> --account-id <accountId>`. Social LinkedIn costs $20
 per connected LinkedIn account per month. Every LinkedIn read, sync, and write is
 covered by that seat, with no credits, top-ups, or per-action charges. Social X
 costs $20 per connected X account per month, includes 15,000
 credits with one-month rollover, and offers $15 top-ups for another 15,000
 credits. Both subscriptions can coexist. Once billing is ready, connect returns
-`{ status: "pending_approval", attemptId, platform, connectURL }` and prints
+`{ status: "pending_approval", accountId, platform, connectURL }` and prints
 `Open this URL: <url>`; surface `connectURL` to the user, have them approve in
 the browser/profile they want to use, then call `connect` again with the same
-ID. Replaying a completed ID is stable; omit `--attempt` after completion only
+ID. Replaying a connected ID is stable; omit `--account-id` after completion only
 to connect another account. Interactive
 connect prints the same URL and polls until the connection appears in bare
-`social account`. Once the account appears it returns
-`{ status: "connected", attemptId, platform, account }`. Bare `social account`
+`social account`. Once the partial row is complete it returns
+`{ status: "connected", accountId, platform, account }`. Bare `social account`
 also shows the connected-account row. `reconnect` remains the interactive
-blocking flow, carries no connect-attempt ID, and does not change billing.
+blocking flow, carries no new-account ID, and does not change billing.
 LinkedIn uses Unipile hosted auth; web connect lives at `/connect/linkedin`. For
 X, the bearer is requested with full scopes; the bearer-session `cliGrant`
 decides usage scope at request time.
@@ -265,9 +265,9 @@ window.
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
 | `invalid_argument`                                   | A flag failed parsing/validation.                 | Check `--help`; the ranges in the platform references are authoritative. |
-| `billing_seat_timed_out`                             | Seat purchase/payment action did not complete.    | Finish the printed billing URL, then resume with `social account connect <platform> --attempt <attemptId>`. |
+| `billing_seat_timed_out`                             | Seat purchase/payment action did not complete.    | Finish the printed billing URL, then resume with `social account connect <platform> --account-id <accountId>`. |
 | `no_available_seat`                                  | Legacy/direct API path has no remaining seat.     | Re-run CLI `connect` or add a seat in the dashboard.                     |
-| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Follow the terminal attempt's `retryable` guidance; do not silently start another purchase. |
+| `linkedin_connect_timed_out` / `x_connect_timed_out` | User did not approve in browser within the platform timeout. | Follow the terminal connection's `retryable` guidance; do not silently start another purchase. |
 | `Missing required positional argument: ACCOUNT`       | `disconnect` or `reconnect` is missing an account. | Add the username/id.                                                       |
 
 ## Troubleshooting

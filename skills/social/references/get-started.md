@@ -97,9 +97,10 @@ Do **not** background `setup`, pipe `yes` into it, or loop it without a cap.
 ## Step 3 — Connect a platform
 
 `setup` authenticates the Social account and establishes the reusable payment
-method. The platform-specific connect attempt purchases only that provider's
-plan or next seat, or the applicable legacy Social Pro seat during transition,
-normally charging the stored card directly. Connect returns
+method. The platform-specific connect command creates or resumes a partial
+`connected_accounts` row and purchases only that provider's plan or next seat,
+or the applicable legacy Social Pro seat during transition, normally charging
+the stored card directly. Connect returns
 a payment URL only when the bank requires customer action. Like setup, connect
 is pollable in a non-TTY shell:
 
@@ -109,28 +110,29 @@ social account connect linkedin   # or: social account connect x
 
 | `.status`          | Meaning                                  | What you do |
 | ------------------ | ---------------------------------------- | ----------- |
-| `connected`        | Account is linked.                       | Done; show `.account.username`. Replaying this `attemptId` is stable. |
-| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `attemptId`. |
-| `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; retry with the returned `attemptId`. |
+| `connected`        | Account is linked.                       | Done; show `.account.username`. Replaying this connected `accountId` is stable. |
+| `pending_billing`  | The selected provider seat needs billing. | Surface `paymentURL` only when present; retry with the returned `accountId`. |
+| `pending_approval` | Awaiting browser approval.               | Surface `connectURL`; retry with the returned `accountId`. |
 
-Terminal attempt responses include a machine-readable `.code` and `.retryable`;
+Terminal connection responses include a machine-readable `.code` and `.retryable`;
 surface the code and never silently start another purchase.
 
-A first call without `--attempt` resumes the active unexpired attempt or creates
-one. Capture `attemptId` from every response, then retry only that operation:
+A first call without `--account-id` resumes the active unexpired partial account
+or creates one. Capture `accountId` from every response, then retry only that
+connection:
 
 ```bash
-social account connect linkedin --attempt <attemptId>
+social account connect linkedin --account-id <accountId>
 ```
 
 A `pending_billing` response carries a `paymentURL` only when the bank requires
 customer action, such as 3-D Secure. Surface it to the human, have them approve
-the payment, then call connect again with the same `attemptId`.
+the payment, then call connect again with the same `accountId`.
 A `pending_approval` response carries a `connectURL` — surface it to the human,
 ask them to approve in the browser/profile they want to use, then call connect
 again with the same ID. When it returns `connected`, confirm the linked
-`@username`. Replaying that completed ID returns the same result; omit
-`--attempt` only when the user wants to connect another account.
+`@username`. Replaying that connected ID returns the same result; omit
+`--account-id` only when the user wants to connect another account.
 
 Social LinkedIn is $20 per connected LinkedIn account per month. The seat covers
 every LinkedIn read, sync, and write, with no credits, top-ups, or per-action

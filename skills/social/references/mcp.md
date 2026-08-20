@@ -66,12 +66,13 @@ If it returns `pending_billing`, surface `checkoutURL` and invoke the exact
 purchases a provider plan. Once ready, preserve `user`, `scope`, and exact
 `capabilities`, then follow its provider-specific `nextTools`.
 
-`account_connect` accepts `{ platform, attemptId? }` and can charge the stored
-card for only that provider's plan or next seat, or the applicable legacy Social
-Pro seat during transition. Omit `attemptId` on the first
-call, then use the exact returned ID from every `nextTools` retry. Surface
+`account_connect` accepts `{ platform, accountId? }`, creates or resumes a
+partial `connected_accounts` row, and can charge the stored card for only that
+provider's plan or next seat, or the applicable legacy Social Pro seat during
+transition. Omit `accountId` on the first call, then use the exact returned ID
+from every `nextTools` retry. Surface
 `paymentURL` only when `pending_billing` requires customer action; after that,
-surface the hosted `connectURL` from `pending_approval`. Replaying a completed
+surface the hosted `connectURL` from `pending_approval`. Replaying a connected
 ID is stable. Omit the ID after completion only to connect another account.
 
 ## Troubleshooting

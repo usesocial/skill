@@ -12,7 +12,7 @@ requests, reactions, comments, posts, and proxy calls.
 
 | Command | Purpose |
 | --- | --- |
-| `social account connect linkedin [--attempt <id>]` | Purchases one LinkedIn seat, then runs hosted connection. In non-TTY shells, omit the flag first and reuse the returned `attemptId` on every poll. |
+| `social account connect linkedin [--account-id <id>]` | Creates or resumes a partial account, purchases one LinkedIn seat, then runs hosted connection. In non-TTY shells, omit the flag first and reuse the returned `accountId` on every poll. |
 | `social account reconnect linkedin <account>` | Re-auth an existing account. |
 | `social account disconnect linkedin <account>` | Disconnect an account. |
 | `social account` | Inspect authenticated user and connected accounts. |
