@@ -99,7 +99,7 @@ A direct instruction from the user is the approval. Check in first when they ask
 
 Writes require `read,write` and have no per-action charge. The skill, not the CLI, owns consent: a direct instruction is enough, and otherwise show the action, target, and body/media summary, then get a yes.
 
-Pace writes. Instagram access through Unipile is unofficial, and Unipile recommends at most 100 actions a day and 10 an hour per account. Spread larger jobs over time and tell the user the schedule instead of sending them in a burst. Replying to inbound messages is safe.
+Pace writes. Instagram access through Unipile is unofficial, and Unipile recommends at most 100 actions a day and 10 an hour per account. Spread larger jobs over time and tell the user the schedule instead of sending them in a burst. Unipile treats replies to inbound messages as lower risk, but they can still count against the account.
 
 ```bash
 echo "Launch day." | social instagram post --media ./launch.jpg

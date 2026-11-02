@@ -301,7 +301,7 @@ state the total once and get one yes — do not slice a big spend into silent
 sub-$5 pieces. If you cannot bound a per-item estimate below $5 (unknown item
 count), treat it as $5+.
 
-Pace Instagram writes. Instagram access is unofficial, and Unipile recommends at most 100 actions a day and 10 an hour per account. Spread larger jobs over time and tell the user the schedule instead of sending them in a burst. Replying to inbound messages is safe. A direct instruction still approves the write; pacing decides when it runs.
+Pace Instagram writes. Instagram access is unofficial, and Unipile recommends at most 100 actions a day and 10 an hour per account. Spread larger jobs over time and tell the user the schedule instead of sending them in a burst. Unipile treats replies to inbound messages as lower risk, but they can still count against the account. A direct instruction still approves the write; pacing decides when it runs.
 
 ## Safety rules
 
