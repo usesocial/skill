@@ -1,10 +1,12 @@
 # Instagram - `social instagram`
 
-Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it for free, named reads hit the live network and spend usage, writes act.
+Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `sql` reads it locally, named reads hit the live network, writes act. Social Instagram is $20 a month per connected Instagram account, and all activity is included, with no credits, top-ups, or per-action charges.
 
 `social instagram <command>`. Cursor lists use `--limit`, `--cursor` from `.meta.cursor`, and sometimes `--offset` when the provider supports offset fallback. List output is `.items[]`; single-resource output is `.data`.
 
 Instagram commands run through Unipile. There is no raw proxy command.
+
+Hosted MCP has Instagram tools for everything here except `post`, `story`, `locations`, `message attachment`, `sync`, and `sql`. MCP tools can't send or return media, locations only tag posts and stories, and `sync` and `sql` are local to the CLI. Over MCP, `instagram_messages_list` and `instagram_messages_read` stand in for the local mirror. An MCP connection authorized before Instagram shipped has to remove and re-add the Social server to gain these tools.
 
 ## Account lifecycle
 
@@ -13,6 +15,8 @@ Instagram commands run through Unipile. There is no raw proxy command.
 | `social account connect instagram` | Browser connection flow. Opens the web app on a TTY; prints the URL on non-TTY. |
 | `social account reconnect instagram <account>` | Re-auth an existing account. |
 | `social account disconnect instagram <account>` | Disconnect an account. |
+| `social account default get instagram` | Read the shared default Instagram account. |
+| `social account default set <account> instagram` | Set the shared default Instagram account. |
 | `social account` | Inspect authenticated user and connected accounts. |
 
 Setup details live in `references/setup.md`. The web connect URL is `/connect/instagram`.
@@ -21,27 +25,27 @@ Setup details live in `references/setup.md`. The web connect URL is `/connect/in
 
 Profile targets accept `@username`, bare `username`, `instagram.com/<username>`, `profile_id:<id>`, or `user_id:<id>`. Omit an optional profile target to use the authenticated account.
 
-Post targets accept `post_id:<id>` or a post URL. Conversation targets accept `chat_id:<id>`. Message targets accept `message_id:<id>`. Relation request targets accept `request_id:<id>`.
+Post targets accept `post_id:<id>` or a post URL. Comment targets accept `comment_id:<id>`. Conversation targets accept `chat_id:<id>`. Message targets accept `message_id:<id>`. Attachment targets accept `attachment_id:<id>`. Relation request targets accept `request_id:<id>`.
 
 ## Profiles and live reads
 
 | Command | Args | Notes |
 | --- | --- | --- |
 | `profile [target]` | `--account`, `-H/--header` | Connected profile by default. |
-| `posts [target]` | `--limit 1-100`, `--cursor`, `--offset`, `--account`, `-H/--header` | Posts for the connected account or target profile. |
+| `posts [target]` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Posts for the connected account or target profile. |
 | `posts get <target>` | `--account`, `-H/--header` | Fetch one post. |
 | `followers [target]` | `--limit 1-1000`, `--cursor`, `--offset`, `--account`, `-H/--header` | Follower graph. For your own graph, prefer `sync followers` then SQL. |
 | `following [target]` | `--limit 1-1000`, `--cursor`, `--offset`, `--account`, `-H/--header` | Following graph. For your own graph, prefer `sync following` then SQL. |
-| `comments <target>` | `--limit 1-100`, `--cursor`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--account`, `-H/--header` | Comments on a post. |
-| `comments replies <post-id> <comment-id>` | `--limit 1-100`, `--cursor`, `--offset`, `--account`, `-H/--header` | Replies to a comment. |
-| `comments reactions <post-id> <comment-id>` | `--limit 1-100`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions on a comment. |
-| `reactions <target>` | `--limit 1-100`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
-| `locations` | `--search-query`, `--latitude`, `--longitude`, `--account`, `-H/--header` | Search Instagram locations. |
+| `comments <target>` | `--limit`, `--cursor`, `--offset`, `--sort-by MOST_RECENT\|MOST_RELEVANT`, `--account`, `-H/--header` | Comments on a post. |
+| `comments replies <post-id> <comment-id>` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Replies to a comment. |
+| `comments reactions <post-id> <comment-id>` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions on a comment. |
+| `reactions <target>` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions on a post. |
+| `locations` | `--search-query`, `--latitude`, `--longitude`, `--account`, `-H/--header` | Search Instagram locations. Use the returned ID with `post` or `story`. |
 | `user comments [target]` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Comments by a user. |
 | `user reactions [target]` | `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Reactions by a user. |
-| `requests list` | `--type`, `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Relation requests. |
+| `requests list` | `--type sent\|received` (required), `--limit`, `--cursor`, `--offset`, `--account`, `-H/--header` | Relation requests. |
 
-Live reads may hit the proxy cache. Cache hits are free; fresh upstream calls are metered. Followers and following use the same 15-minute cache TTL as other cacheable reads, but still page carefully: a full graph can spend real usage. Messages are own-data reads; use sync+SQL for inbox work because message freshness is always latest-only, not TTL-fresh.
+Live reads may hit the proxy cache, and they have no per-action charge either way. Followers and following use the same 15-minute cache TTL as other cacheable reads. Page them with a cap, since a full graph takes many calls. For inbox work in the CLI, use sync+SQL: it has no live inbox list, and message freshness is always latest-only, not TTL-fresh.
 
 ```bash
 social instagram profile @username
@@ -69,13 +73,15 @@ A direct instruction from the user is the approval. Check in first when they ask
 
 | Command | Args | Notes |
 | --- | --- | --- |
+| `post` | caption from stdin (optional); `--media` (required, repeatable), `--location-id`, `--account` | Publish a feed post. Pass at least one image or video, and repeat `--media` for a carousel. Media caps at 20 MB combined. |
+| `story` | caption from stdin (optional); `--media` (required), `--location-id`, `--location-name`, `--account` | Publish a story from exactly one image or video, up to 20 MB. Pass `--location-id` and `--location-name` together. |
 | `posts delete <target>` | `--account` | Delete a post. |
 | `posts unreact <target>` | `--body`, `--account` | Remove your post reaction. |
 | `comment <target>` | body from stdin; `--media`, `--account` | Comment on a post. |
 | `comments reply <post-id> <comment-id>` | body from stdin; `--media`, `--account` | Reply to a comment. |
-| `comments react <post-id> <comment-id>` | `--type`, `--body`, `--account` | React to a comment. |
+| `comments react <post-id> <comment-id>` | `--type`, `--body`, `--account` | Like a comment. `instagram_like` is the default and the only comment reaction type. |
 | `comments unreact <post-id> <comment-id>` | `--body`, `--account` | Remove your comment reaction. |
-| `react <target>` | `--type`, `--body`, `--account` | React to a post. |
+| `react <target>` | `--type`, `--body`, `--account` | Like a post. `instagram_like` is the default and the only post reaction type. |
 | `follow <target>` | `--account` | Follow a profile. |
 | `unfollow <target>` | `--account` | Unfollow a profile. |
 | `message <target>` | body from stdin; `--media`, `--account` | Send a message to an existing conversation. |
@@ -84,18 +90,24 @@ A direct instruction from the user is the approval. Check in first when they ask
 | `messages add-participant <target> <user>` | `--body`, `--account` | Add a conversation participant. |
 | `messages remove-participant <chat> <user>` | `--account` | Remove a conversation participant. |
 | `message read <chat> <message>` | `--account` | Mark a message read. |
-| `message react <chat> <message>` | `--type`, `--body`, `--account` | React to a message. |
+| `message react <chat> <message>` | `--type <emoji>`, `--body`, `--account` | React to a message with an emoji. |
 | `message unreact <chat> <message>` | `--body`, `--account` | Remove your message reaction. |
-| `message edit <chat> <message>` | new text from stdin | Edit one of your own messages. |
+| `message edit <chat> <message>` | new text from stdin; `--account` | Edit one of your own messages. |
 | `message delete <chat> <message>` | `--account` | Delete one of your own messages. |
 | `requests accept <request-id>` | `--account` | Accept a relation request. |
 | `requests cancel <request-id>` | `--account` | Cancel or refuse a relation request. |
 
-Writes are metered and require `read,write`. The skill, not the CLI, owns consent: a direct instruction is enough, and otherwise show the action, target, and body/media summary, then get a yes. For high-fanout metered reads, estimate from schema and confirm first only when the task total reaches $5.
+Writes require `read,write` and have no per-action charge. The skill, not the CLI, owns consent: a direct instruction is enough, and otherwise show the action, target, and body/media summary, then get a yes.
+
+Pace writes. Instagram access through Unipile is unofficial, and Unipile recommends at most 100 actions a day and 10 an hour per account. Spread larger jobs over time and tell the user the schedule instead of sending them in a burst. Replying to inbound messages is safe.
 
 ```bash
+echo "Launch day." | social instagram post --media ./launch.jpg
+social instagram post --media ./one.jpg --media ./two.mp4 --location-id <location-id>
+social instagram locations --search-query "San Francisco"
+social instagram story --media ./behind-the-scenes.mp4 --location-id <location-id> --location-name "San Francisco"
 echo "Thoughtful launch." | social instagram comment post_id:<post-id>
-social instagram react post_id:<post-id> --type like
+social instagram react post_id:<post-id>
 echo "Thanks for the note." | social instagram message chat_id:<chat-id>
 social instagram follow @username
 ```
@@ -121,7 +133,7 @@ Public views: `ig_profiles`, `ig_conversations`, `ig_messages`, `ig_posts`, `ig_
 
 Bare `sync` returns `{ data, meta }`; `.data[]` lists rows with `collection`, `table`, `supportsSince`, `lastSyncedAt`, `fresh`, `objectCount`, and `totalRows`. Followers and following require one full initial sync before `--since`; after that, `--since` is allowed. `messages` has TTL `0`, so freshness is never inferred from age; sync messages when you need latest inbox state. Other sync rows use the 15-minute freshness gate.
 
-`sql` is free and read-only. Query output is `{ account, items, meta }`; project rows with `.items[]`. Empty results are valid local truth; use bare `sql`, `rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
+`sql` is read-only and runs locally. Query output is `{ account, items, meta }`; project rows with `.items[]`. Empty results are valid local truth; use bare `sql`, `rows`, `synced_at`, and `.meta.cache.tables[].lastSyncedAt` to judge local freshness.
 
 ### Recipes
 
@@ -132,10 +144,10 @@ social instagram sql "SELECT sender_name, text, datetime(created_at/1000,'unixep
   | jq '.items[]'
 
 # Conversation list.
-social instagram sql "SELECT id, user_name, unread_count, datetime(last_message_at/1000,'unixepoch') AS last_at FROM ig_conversations ORDER BY last_message_at DESC LIMIT 50" \
+social instagram sql "SELECT chat_id, user_name, unread_count, datetime(last_message_at/1000,'unixepoch') AS last_at FROM ig_conversations ORDER BY last_message_at DESC LIMIT 50" \
   | jq '.items[]'
 
-# Own-post performance, free after sync.
+# Own-post performance.
 social instagram sync posts
 social instagram sql "SELECT text, share_url, comments_counter, impressions_counter, datetime(created_at/1000,'unixepoch') AS at FROM ig_posts ORDER BY created_at DESC LIMIT 25" \
   | jq '.items[]'
@@ -152,3 +164,4 @@ social instagram sql "SELECT username, name, headline FROM ig_followers WHERE na
 - No people, company, or job search.
 - No company Pages or Page analytics.
 - No raw Unipile escape hatch.
+- No post or story creation, location search, attachment download, `sync`, or `sql` over MCP. Use the CLI.

@@ -102,7 +102,7 @@ After success, credentials live in the OS keyring (service `social-cli`) with a 
 
 Use bare `social account` to inspect auth state and connected accounts. It always prints compact JSON with `status`, credential namespace/path, verified session data when available, connected account rows, and seat counts when the session is online.
 
-Use `social account billing` for the Social LinkedIn and Social X subscription,
+Use `social account billing` for the Social LinkedIn, Social Instagram, and Social X subscription,
 connected-account, and X credit snapshot. Use `social account billing portal`
 to print the hosted billing portal URL; it prints `{ "url": "...", "opened":
 false }`, so agents can hand the URL to the user.
@@ -115,6 +115,7 @@ Each platform connect command then creates or resumes its own partial
 
 ```bash
 social account connect linkedin    # LinkedIn connection URL
+social account connect instagram   # Instagram connection URL
 social account connect x           # X OAuth handshake
 ```
 
@@ -139,7 +140,9 @@ bank requires customer action. Capture `accountId`, surface `paymentURL`, have
 the user approve the payment, then call
 `social account connect <platform> --account-id <accountId>`. Social LinkedIn costs $20
 per connected LinkedIn account per month. Every LinkedIn read, sync, and write is
-covered by that seat, with no credits, top-ups, or per-action charges. Social X
+covered by that seat, with no credits, top-ups, or per-action charges. Social
+Instagram costs $20 per connected Instagram account per month on the same terms.
+Social X
 costs $20 per connected X account per month, includes 15,000
 credits with one-month rollover, and offers $15 top-ups for another 15,000
 credits. Both subscriptions can coexist. Once billing is ready, connect returns
@@ -153,7 +156,8 @@ connect prints the same URL and polls until the connection appears in bare
 `{ status: "connected", accountId, platform, account }`. Bare `social account`
 also shows the connected-account row. `reconnect` remains the interactive
 blocking flow, carries no new-account ID, and does not change billing.
-LinkedIn uses Unipile hosted auth; web connect lives at `/connect/linkedin`. For
+LinkedIn and Instagram use Unipile hosted auth; web connect lives at
+`/connect/linkedin` and `/connect/instagram`. For
 X, the bearer is requested with full scopes; the bearer-session `cliGrant`
 decides usage scope at request time.
 
@@ -163,6 +167,10 @@ To swap accounts:
 social account
 social account disconnect linkedin <@username|profile_id:<id>>
 social account reconnect linkedin <@username|profile_id:<id>>
+
+social account
+social account disconnect instagram <@username|profile_id:<id>>
+social account reconnect instagram <@username|profile_id:<id>>
 
 social account
 social account disconnect x <@username|profile_id:<id>>
@@ -190,12 +198,12 @@ Choose Read + Write in the login prompt.
 
 ## Per-call account selection
 
-Every command accepts `--account <@username|profile_id:<id>>`. Without it the CLI uses that platform's shared server default. Use `social account default get <linkedin|x>` to inspect it and `social account default set <linkedin|x> <selector>` to change it across CLI and MCP. Use `--account` to override it for one call. Selectors resolve against bare `social account`.
+Every command accepts `--account <@username|profile_id:<id>>`. Without it the CLI uses that platform's shared server default. Use `social account default get <linkedin|instagram|x>` to inspect it and `social account default set <linkedin|instagram|x> <selector>` to change it across CLI and MCP. Use `--account` to override it for one call. Selectors resolve against bare `social account`.
 
 ## Caching
 
 Allowlisted GET reads use the proxy cache by default. X cache hits spend no
-credits because they skip the upstream provider call. LinkedIn reads have no
+credits because they skip the upstream provider call. LinkedIn and Instagram reads have no
 per-action charge whether they hit the cache or the upstream provider.
 
 The default cache TTL is 15 minutes. Configure the local default in seconds:
@@ -260,7 +268,7 @@ window.
 | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `unauthenticated` / `Not signed in`                  | No bearer or expired.                             | `social account setup`.                                                  |
 | `scope_missing`                                      | Token has `read`, command needs `write`.          | `social account logout`, then `social account setup` and choose Read + Write. |
-| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin` or `social account connect x`. |
+| `platform_not_connected`                             | No connected account for that platform.           | `social account connect linkedin`, `social account connect instagram`, or `social account connect x`. |
 | `account_not_found`                                  | `--account` value did not match.                  | `social account`, reuse the printed username/id.                           |
 | `endpoint_not_available_in_v1`                       | Path not in the adapter's allowlist.              | Pick a different command; do not retry.                                  |
 | `rate_limited`                                       | Upstream throttle hit.                            | LinkedIn retries short waits automatically; long waits exit `7` with resume guidance — re-run `retryCommand` after `resumeAt`. X quotas are tight on free tiers. |
@@ -277,7 +285,7 @@ window.
 | `command not found: social`         | Not installed or `$PATH` missing the global bin. | Re-run install; check `bun pm bin -g` / `npm bin -g`.                        |
 | `Not signed in` / `unauthenticated` | No token or expired.                             | `social account setup`.                                                      |
 | `scope_missing`                     | Token has `read`, command needs `write`.         | `social account logout`, then `social account setup` and choose Read + Write. |
-| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect x`. |
+| `platform_not_connected`            | Account for that platform not connected.         | `social account connect linkedin` / `social account connect instagram` / `social account connect x`. |
 | Browser fails to open               | WSL or headless.                                 | Re-run from the agent/non-TTY context and surface the printed URL to the user. |
 | Keyring write failure               | macOS Keychain locked, Linux missing libsecret.  | Falls back to `~/.social/credentials.json` automatically; check permissions. |
 

@@ -4,16 +4,16 @@ The guided first-run flow: install check → sign in → connect a platform → 
 sync. This is the home of the **skill-owns-consent** pattern for X credits — the
 CLI never prompts and never blocks on approval, so *you* (the agent) estimate X
 cost, state it, and get the human's explicit yes before anything estimated at $5
-or more. LinkedIn reads, syncs, and writes have no per-action charge.
+or more. LinkedIn and Instagram reads, syncs, and writes have no per-action charge.
 The policy core lives in `SKILL.md`; this reference applies it to first-run
 onboarding.
 
 Run it when the user says "let's get started with /social", "set me up", "log me
-in", or asks to connect LinkedIn/X for the first time. The install/account
+in", or asks to connect LinkedIn, Instagram, or X for the first time. The install/account
 checks, login polling, and connect polling below are free, non-blocking checks.
 An X live read used to size the first sync costs cents, so run it when it helps
-and mention the spend. Never estimate or request approval for LinkedIn action
-costs because the monthly seat covers them.
+and mention the spend. Never estimate or request approval for LinkedIn or
+Instagram action costs because the monthly seat covers them.
 
 ## The shape of onboarding
 
@@ -29,7 +29,7 @@ without backgrounding anything.
 ## Step 1 — Install check
 
 Bare `social account` answers install + login + connection in one free call. Do
-not probe with a metered X or Instagram live read.
+not probe with a metered X live read.
 
 ```bash
 social account 2>&1 | head -c 600
@@ -105,7 +105,7 @@ a payment URL only when the bank requires customer action. Like setup, connect
 is pollable in a non-TTY shell:
 
 ```bash
-social account connect linkedin   # or: social account connect x
+social account connect linkedin   # or: social account connect instagram, social account connect x
 ```
 
 | `.status`          | Meaning                                  | What you do |
@@ -136,7 +136,8 @@ again with the same ID. When it returns `connected`, confirm the linked
 
 Social LinkedIn is $20 per connected LinkedIn account per month. The seat covers
 every LinkedIn read, sync, and write, with no credits, top-ups, or per-action
-charges. Social X is $20 per connected X account per
+charges. Social Instagram is the same: $20 per connected Instagram account per
+month with all activity included. Social X is $20 per connected X account per
 month with 15,000 credits, one-month rollover, and $15 top-ups for another
 15,000 credits. The plans coexist; two accounts on each provider cost $80 per
 month and include 30,000 X credits. Re-run bare `social account` any time to
@@ -148,7 +149,7 @@ For X, this is the first step that can spend credits. The pattern is:
 **estimate → state → confirm (at $5+) → run → verify.** A full-graph first sync
 usually clears $5 easily; a small targeted sync (say, just DMs) often does not,
 and can run once you have stated the estimate. Skip cost estimates and cost
-confirmations for every LinkedIn read, sync, and write.
+confirmations for every LinkedIn and Instagram read, sync, and write.
 
 ### 1. Estimate
 
@@ -213,14 +214,15 @@ The user is now set up. Hand off to the platform references for day-to-day work:
 
 - `references/x.md` — X command catalog and recipes.
 - `references/linkedin.md` — LinkedIn command catalog and recipes.
+- `references/instagram.md` — Instagram command catalog and recipes.
 - `references/setup.md` — auth state machine details, scopes/billing, cache,
   error catalog, troubleshooting.
 
 The consent pattern from Step 4 applies beyond the first sync: for any
 usage-spending command, estimate and state the cost, and get a yes when the
 estimate — for one command, or the task's metered commands taken together —
-reaches $5. Every LinkedIn action skips this cost gate because the monthly seat
-covers it without a per-action charge.
+reaches $5. Every LinkedIn and Instagram action skips this cost gate because the
+monthly seat covers it without a per-action charge.
 For `destructive` and `outbound_write` hazards, a direct instruction from the user
 is the approval. See the write rule and hazard vocabulary in `SKILL.md`; hazards are
 advisory signals that *you* act on — the CLI itself never gates.

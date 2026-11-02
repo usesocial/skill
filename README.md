@@ -17,13 +17,14 @@ One `social` skill spanning all supported platforms, with progressive-disclosure
 
 ## Text input
 
-All freeform text for posts, comments, messages, message edits, and connection
-request notes is sent via stdin. Do not pass text as a positional argument:
+All freeform text for posts, captions, comments, messages, message edits, and
+connection request notes is sent via stdin. Do not pass text as a positional argument:
 
 ```sh
 echo "Thanks for the note." | social x message @username
 echo "Thanks for the note." | social linkedin message @username
 echo "Thanks for the note." | social instagram message chat_id:<chat-id>
+echo "Launch day." | social instagram post --media ./launch.jpg
 ```
 
 Targets, typed IDs, URLs, and usernames still go on argv. Pipe a JSON object via

@@ -75,6 +75,20 @@ from every `nextTools` retry. Surface
 surface the hosted `connectURL` from `pending_approval`. Replaying a connected
 ID is stable. Omit the ID after completion only to connect another account.
 
+## Instagram
+
+Instagram tools cover the CLI's reads and writes except for `post`, `story`,
+`locations`, and `message attachment`, because MCP tools can't send or return media
+and locations only tag posts and stories. The local `sync` and `sql` commands have
+no MCP tools either, so `instagram_messages_list` and `instagram_messages_read` serve
+the inbox instead. Instagram access is unofficial, and Unipile recommends at most
+100 actions a day and 10 an hour per account, so pace writes. Replying to inbound
+messages is safe.
+
+A connection authorized before Instagram shipped doesn't hold the Instagram scopes.
+Remove and re-add the Social server, then approve Instagram access, to gain these
+tools. Until then `account_connect` refuses Instagram before any billing.
+
 ## Troubleshooting
 
 - **No browser opens:** click the client's connect/authenticate control or invoke
