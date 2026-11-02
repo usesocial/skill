@@ -110,7 +110,7 @@ Treat proxy as `outbound_write` even for read-shaped envelopes. Show the exact m
 
 ## Writes
 
-Confirm with the user before every write.
+A direct instruction from the user is the approval. Check in first when they asked for a draft or review, the target is ambiguous, or they didn't ask for the write.
 
 | Command | Args | Notes |
 | --- | --- | --- |
@@ -212,7 +212,7 @@ NEXT=$(echo "$PAGE1" | jq -r '.meta.cursor // empty')
 social linkedin reactions post_id:<post-id> --limit 100 --offset 0 \
   | jq '.items[]'
 
-# Post, comment, react, and request only after approval.
+# Post, comment, react, and request when the user tells you to.
 POST="post_id:<post-id>"
 PROFILE="profile_id:<profile-id>"
 echo "Shipping the new UseSocial CLI surface." | social linkedin post

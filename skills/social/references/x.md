@@ -40,7 +40,7 @@ Field flags extend default comma-separated presets and de-dupe repeated fields. 
 
 ## Writes
 
-Confirm with the user before every write.
+A direct instruction from the user is the approval. Check in first when they asked for a draft or review, the target is ambiguous, or they didn't ask for the write.
 
 | Command | Args | Notes |
 | --- | --- | --- |

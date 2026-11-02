@@ -148,8 +148,7 @@ For X, this is the first step that can spend credits. The pattern is:
 **estimate → state → confirm (at $5+) → run → verify.** A full-graph first sync
 usually clears $5 easily; a small targeted sync (say, just DMs) often does not,
 and can run once you have stated the estimate. Skip cost estimates and cost
-confirmations for every LinkedIn read, sync, and write; outward and destructive
-confirmations still apply for safety.
+confirmations for every LinkedIn read, sync, and write.
 
 ### 1. Estimate
 
@@ -222,6 +221,6 @@ usage-spending command, estimate and state the cost, and get a yes when the
 estimate — for one command, or the task's metered commands taken together —
 reaches $5. Every LinkedIn action skips this cost gate because the monthly seat
 covers it without a per-action charge.
-`destructive` and `outbound_write` hazards are always confirmed, regardless of
-cost. See the hazard vocabulary in `SKILL.md`; hazards are
+For `destructive` and `outbound_write` hazards, a direct instruction from the user
+is the approval. See the write rule and hazard vocabulary in `SKILL.md`; hazards are
 advisory signals that *you* act on — the CLI itself never gates.
