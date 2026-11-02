@@ -6,7 +6,7 @@ Shared rules live in `SKILL.md`: `sync` pulls own data into the local mirror, `s
 
 Instagram commands run through Unipile. There is no raw proxy command.
 
-Hosted MCP has Instagram tools for everything here except `post`, `story`, `locations`, `message attachment`, `sync`, and `sql`. MCP tools can't send or return media, locations only tag posts and stories, and `sync` and `sql` are local to the CLI. Over MCP, `instagram_messages_list` and `instagram_messages_read` stand in for the local mirror. An MCP connection authorized before Instagram shipped has to remove and re-add the Social server to gain these tools.
+Hosted MCP has Instagram tools for everything here except video, `locations`, `message attachment`, `sync`, and `sql`. `instagram_post`, `instagram_story`, `instagram_comment`, `instagram_comment_reply`, `instagram_message`, and `instagram_messages_new` take images through `image_url`, `image_base64`, `image_urls`, or `image_base64s`, exactly one per call (`references/mcp.md` has the limits); `instagram_story` takes one image, through `image_url` or `image_base64`. `sync` and `sql` are local to the CLI. Over MCP, `instagram_messages_list` and `instagram_messages_read` stand in for the local mirror. An MCP connection authorized before Instagram shipped has to remove and re-add the Social server to gain these tools.
 
 ## Account lifecycle
 
@@ -73,8 +73,8 @@ A direct instruction from the user is the approval. Check in first when they ask
 
 | Command | Args | Notes |
 | --- | --- | --- |
-| `post` | caption from stdin (optional); `--media` (required, repeatable), `--location-id`, `--account` | Publish a feed post. Pass at least one image or video, and repeat `--media` for a carousel. Media caps at 20 MB combined. |
-| `story` | caption from stdin (optional); `--media` (required), `--location-id`, `--location-name`, `--account` | Publish a story from exactly one image or video, up to 20 MB. Pass `--location-id` and `--location-name` together. |
+| `post` | caption from stdin (optional); `--media` (required, repeatable), `--location-id`, `--account` | Publish a feed post. Pass at least one image or video, and repeat `--media` for a carousel. Media caps at 20 MB combined. Over MCP, `instagram_post` takes images only. |
+| `story` | caption from stdin (optional); `--media` (required), `--location-id`, `--location-name`, `--account` | Publish a story from exactly one image or video, up to 20 MB. Pass `--location-id` and `--location-name` together. Over MCP, `instagram_story` takes an image only. |
 | `posts delete <target>` | `--account` | Delete a post. |
 | `posts unreact <target>` | `--body`, `--account` | Remove your post reaction. |
 | `comment <target>` | body from stdin; `--media`, `--account` | Comment on a post. |
@@ -164,4 +164,4 @@ social instagram sql "SELECT username, name, headline FROM ig_followers WHERE na
 - No people, company, or job search.
 - No company Pages or Page analytics.
 - No raw Unipile escape hatch.
-- No post or story creation, location search, attachment download, `sync`, or `sql` over MCP. Use the CLI.
+- No video, location search, attachment download, `sync`, or `sql` over MCP. Use the CLI.

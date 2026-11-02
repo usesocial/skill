@@ -84,9 +84,10 @@ starts Social's browser login and consent flow when it connects or first uses a
 tool. The client receives and exchanges the temporary authorization code with
 PKCE automatically. Never ask the user to extract or paste that code.
 
-Instagram posts, stories, location search, message attachments, `sync`, and `sql`
-need the CLI, because MCP tools can't send or return media and the mirror is local.
-The other Instagram work has MCP tools. An MCP connection authorized before
+MCP write tools for posts, comments, and messages accept images through exactly one
+of `image_url`, `image_base64`, `image_urls`, or `image_base64s`; details are in
+`references/mcp.md`. Video, Instagram location search, message attachment downloads,
+`sync`, and `sql` need the CLI. The other Instagram work has MCP tools. An MCP connection authorized before
 Instagram shipped has to remove and re-add the Social server to gain them.
 
 ## Invocation conventions

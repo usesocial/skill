@@ -75,12 +75,22 @@ from every `nextTools` retry. Surface
 surface the hosted `connectURL` from `pending_approval`. Replaying a connected
 ID is stable. Omit the ID after completion only to connect another account.
 
+`linkedin_post`, `linkedin_message`, `linkedin_comment`, `x_post`,
+`instagram_comment`, `instagram_comment_reply`, `instagram_message`,
+`instagram_messages_new`, `instagram_post`, and `instagram_story` accept images
+through exactly one of `image_url`, `image_base64`, `image_urls`, or `image_base64s`.
+`instagram_post` and `instagram_story` require an image, and `instagram_story` takes
+one through `image_url` or `image_base64`. Text is optional with an image on
+`linkedin_post`, `linkedin_message`, and `x_post`. URLs must be HTTPS and are fetched
+by Social, up to 10 MiB combined. Base64 is limited to just under 3 MiB total, so use
+URLs for larger images. Bytes must be images; video needs the CLI. `x_post` takes up
+to 4 images or 1 GIF, without mixing them, in JPEG, PNG, WebP, or GIF.
+
 ## Instagram
 
-Instagram tools cover the CLI's reads and writes except for `post`, `story`,
-`locations`, and `message attachment`, because MCP tools can't send or return media
-and locations only tag posts and stories. The local `sync` and `sql` commands have
-no MCP tools either, so `instagram_messages_list` and `instagram_messages_read` serve
+Instagram tools cover the CLI's reads and writes except for video, `locations`, and
+`message attachment`. `instagram_post` and `instagram_story` publish images and accept
+a known `location_id`. The local `sync` and `sql` commands have no MCP tools either, so `instagram_messages_list` and `instagram_messages_read` serve
 the inbox instead. Instagram access is unofficial, and Unipile recommends at most
 100 actions a day and 10 an hour per account, so pace writes. Replying to inbound
 messages is safe.
