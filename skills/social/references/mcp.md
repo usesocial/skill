@@ -84,7 +84,7 @@ one through `image_url` or `image_base64`. Text is optional with an image on
 `linkedin_post`, `linkedin_message`, and `x_post`. URLs must be HTTPS and are fetched
 by Social, up to 10 MiB combined. Base64 is limited to just under 3 MiB total, so use
 URLs for larger images. Bytes must be images; video needs the CLI. `x_post` takes up
-to 4 images or 1 GIF, without mixing them, in JPEG, PNG, WebP, or GIF.
+to 4 images or 1 GIF, without mixing them, in JPEG, PNG, WebP, or GIF; static images cap at 5 MiB each.
 
 ## Instagram
 
